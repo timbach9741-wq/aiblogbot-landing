@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIBlogBot 관리자 페이지</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
+        background: #f3f4f6;
+        margin: 0;
+        color: #111827;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 30px 20px 80px; }
+    h1 { font-size: 1.6rem; margin-bottom: 4px; }
+    .sub { color: #6b7280; margin-bottom: 30px; }
+
+    /* 로그인 화면 */
+    #login-screen {
+        max-width: 380px;
+        margin: 100px auto;
+        background: #fff;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+    #login-screen h2 { text-align: center; margin-bottom: 25px; }
+    #login-screen input {
+        width: 100%; padding: 13px; margin-bottom: 14px;
+        border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem;
+    }
+    #login-screen button {
+        width: 100%; padding: 13px; background: #6366f1; color: #fff;
+        border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;
+    }
+    #login-error { color: #ef4444; font-size: 0.9rem; margin-top: 10px; text-align: center; display: none; }
+
+    /* 대시보드 */
+    #dashboard { display: none; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    #logout-btn { background: none; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; color: #4b5563; }
+
+    .section { background: #fff; border-radius: 14px; padding: 25px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .section h2 { font-size: 1.2rem; margin-top: 0; margin-bottom: 18px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    th { color: #6b7280; font-weight: 600; background: #f9fafb; }
+    tr.expiring td { background: #fff7ed; }
+    tr.expired td { background: #fef2f2; color: #9ca3af; }
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+    .badge-soon { background: #fed7aa; color: #9a3412; }
+    .badge-expired { background: #fecaca; color: #991b1b; }
+    .badge-ok { background: #dcfce7; color: #166534; }
+
+    select.status-select {
+        padding: 5px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 0.85rem;
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    /* 라이선스 추가 폼 */
+    #license-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    #license-form input, #license-form select {
+        padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; width: 100%;
+    }
+    #license-form button {
+        grid-column: 1 / -1; padding: 12px; background: #10b981; color: #fff; border: none;
+        border-radius: 8px; font-weight: 700; cursor: pointer;
+    }
+    .empty-msg { color: #9ca3af; padding: 20px 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+    <h2>🔒 관리자 로그인</h2>
+    <input type="email" id="login-email" placeholder="이메일">
+    <input type="password" id="login-password" placeholder="비밀번호">
+    <button id="login-btn">로그인</button>
+    <p id="login-error">로그인에 실패했습니다. 이메일/비밀번호를 확인해주세요.</p>
+</div>
+
+<div class="wrap" id="dashboard">
+    <div class="top-bar">
+        <div>
+            <h1>AIBlogBot 관리자 페이지</h1>
+            <div class="sub">신청 내역과 라이선스 발급/만료 현황을 확인하세요.</div>
+        </div>
+        <button id="logout-btn">로그아웃</button>
+    </div>
+
+    <div class="section">
+        <h2>⏰ 7일 이내 만료 예정 회원</h2>
+        <div class="table-scroll">
+            <table id="expiring-table">
+                <thead>
+                    <tr><th>고객명</th><th>연락처</th><th>이용권</th><th>만료일</th><th>남은 일수</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="empty-msg" id="expiring-empty" style="display:none;">7일 이내 만료 예정인 회원이 없습니다.</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>➕ 라이선스 발급 기록 추가</h2>
+        <form id="license-form">
+            <input type="text" id="lic-name" placeholder="고객명 / 상호명" required>
+            <input type="text" id="lic-contact" placeholder="연락처 (카카오톡ID 등)">
+            <input type="text" id="lic-mac" placeholder="MAC 주소" required>
+            <input type="text" id="lic-key" placeholder="발급된 라이선스 키" required>
+            <select id="lic-period">
+                <option value="1">1개월</option>
+                <option value="3">3개월</option>
+                <option value="6">6개월</option>
+                <option value="">영구</option>
+            </select>
+            <button type="submit">발급 기록 저장</button>
+        </form>
+    </div>
+
+    <div class="section">
+        <h2>📋 전체 라이선스 발급 이력</h2>
+        <div class="table-scroll">
+            <table id="license-table">
+                <thead>
+                    <tr><th>고객명</th><th>연락처</th><th>MAC</th><th>키</th><th>기간</th><th>발급일</th><th>만료일</th><th>상태</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="empty-msg" id="license-empty" style="display:none;">아직 발급 기록이 없습니다.</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📝 신청 내역</h2>
+        <div class="table-scroll">
+            <table id="applications-table">
+                <thead>
+                    <tr><th>신청일시</th><th>이름</th><th>연락방법</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="empty-msg" id="applications-empty" style="display:none;">아직 신청 내역이 없습니다.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://vlclmbikpfaxhxjjqwsi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Ck99T-0loRBoPa8J7amcYg_YlUHkKxt';
+
+let accessToken = sessionStorage.getItem('ablog_admin_token') || null;
+
+const loginScreen = document.getElementById('login-screen');
+const dashboard = document.getElementById('dashboard');
+
+function authHeaders() {
+    return {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+    };
+}
+
+async function login(email, password) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) throw new Error('login failed');
+    const data = await res.json();
+    accessToken = data.access_token;
+    sessionStorage.setItem('ablog_admin_token', accessToken);
+}
+
+function daysUntil(dateStr) {
+    if (!dateStr) return null;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const target = new Date(dateStr);
+    return Math.round((target - today) / (1000 * 60 * 60 * 24));
+}
+
+async function loadApplications() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?select=*&order=created_at.desc`, { headers: authHeaders() });
+    const rows = await res.json();
+    const tbody = document.querySelector('#applications-table tbody');
+    tbody.innerHTML = '';
+    document.getElementById('applications-empty').style.display = rows.length ? 'none' : 'block';
+
+    const statusOptions = ['신규', '연락완료', '결제완료', '취소'];
+
+    rows.forEach(row => {
+        const tr = document.createElement('tr');
+        const dt = new Date(row.created_at);
+        const select = document.createElement('select');
+        select.className = 'status-select';
+        statusOptions.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            if (row.status === opt) o.selected = true;
+            select.appendChild(o);
+        });
+        select.addEventListener('change', async () => {
+            await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+                method: 'PATCH',
+                headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ status: select.value }),
+            });
+        });
+
+        tr.innerHTML = `
+            <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</td>
+            <td>${row.name}</td>
+            <td>${row.contact_type}</td>
+            <td>${row.contact_value}</td>
+            <td>${row.industry}</td>
+            <td>${row.payment_method}</td>
+            <td>${row.question || '-'}</td>
+            <td></td>
+        `;
+        tr.lastElementChild.appendChild(select);
+        tbody.appendChild(tr);
+    });
+}
+
+async function loadLicenses() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=*&order=expires_at.asc.nullslast`, { headers: authHeaders() });
+    const rows = await res.json();
+
+    const licTbody = document.querySelector('#license-table tbody');
+    const expTbody = document.querySelector('#expiring-table tbody');
+    licTbody.innerHTML = '';
+    expTbody.innerHTML = '';
+
+    document.getElementById('license-empty').style.display = rows.length ? 'none' : 'block';
+
+    let expiringCount = 0;
+
+    rows.forEach(row => {
+        const d = row.expires_at ? daysUntil(row.expires_at) : null;
+        let badge = '<span class="badge badge-ok">정상</span>';
+        let rowClass = '';
+        if (d !== null) {
+            if (d < 0) { badge = '<span class="badge badge-expired">만료됨</span>'; rowClass = 'expired'; }
+            else if (d <= 7) { badge = `<span class="badge badge-soon">D-${d}</span>`; rowClass = 'expiring'; }
+        } else {
+            badge = '<span class="badge badge-ok">영구</span>';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = rowClass;
+        tr.innerHTML = `
+            <td>${row.customer_name}</td>
+            <td>${row.contact_value || '-'}</td>
+            <td>${row.mac_address}</td>
+            <td style="font-family:monospace; font-size:0.8rem;">${row.license_key}</td>
+            <td>${row.period_months ? row.period_months + '개월' : '영구'}</td>
+            <td>${row.issued_at}</td>
+            <td>${row.expires_at || '-'}</td>
+            <td>${badge}</td>
+        `;
+        licTbody.appendChild(tr);
+
+        if (d !== null && d >= 0 && d <= 7) {
+            expiringCount++;
+            const etr = document.createElement('tr');
+            etr.className = 'expiring';
+            etr.innerHTML = `
+                <td>${row.customer_name}</td>
+                <td>${row.contact_value || '-'}</td>
+                <td>${row.period_months ? row.period_months + '개월' : '영구'}</td>
+                <td>${row.expires_at}</td>
+                <td>D-${d}</td>
+            `;
+            expTbody.appendChild(etr);
+        }
+    });
+
+    document.getElementById('expiring-empty').style.display = expiringCount ? 'none' : 'block';
+}
+
+function addMonths(dateStr, months) {
+    const d = new Date(dateStr);
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString().slice(0, 10);
+}
+
+document.getElementById('license-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const period = document.getElementById('lic-period').value;
+    const issuedAt = new Date().toISOString().slice(0, 10);
+    const payload = {
+        customer_name: document.getElementById('lic-name').value.trim(),
+        contact_value: document.getElementById('lic-contact').value.trim(),
+        mac_address: document.getElementById('lic-mac').value.trim(),
+        license_key: document.getElementById('lic-key').value.trim(),
+        period_months: period ? parseInt(period, 10) : null,
+        issued_at: issuedAt,
+        expires_at: period ? addMonths(issuedAt, parseInt(period, 10)) : null,
+    };
+    await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload),
+    });
+    e.target.reset();
+    loadLicenses();
+});
+
+async function showDashboard() {
+    loginScreen.style.display = 'none';
+    dashboard.style.display = 'block';
+    await Promise.all([loadApplications(), loadLicenses()]);
+}
+
+document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.style.display = 'none';
+    try {
+        await login(email, password);
+        showDashboard();
+    } catch (err) {
+        errorEl.style.display = 'block';
+    }
+});
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+    sessionStorage.removeItem('ablog_admin_token');
+    accessToken = null;
+    dashboard.style.display = 'none';
+    loginScreen.style.display = 'block';
+});
+
+// 이미 로그인된 세션이 있으면 바로 대시보드로
+if (accessToken) {
+    showDashboard().catch(() => {
+        sessionStorage.removeItem('ablog_admin_token');
+        loginScreen.style.display = 'block';
+    });
+}
+</script>
+</body>
+</html>

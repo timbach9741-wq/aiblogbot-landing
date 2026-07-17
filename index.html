@@ -511,7 +511,7 @@
                     <!-- 1. 성함 / 상호명 -->
                     <div class="form-group" style="margin-bottom: 25px;">
                         <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #334155;">1. 성함 / 상호명 <span style="color: #ef4444;">*</span></label>
-                        <input type="text" required placeholder="예. 홍길동 / OO미용실" style="width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'">
+                        <input type="text" id="name-input" required placeholder="예. 홍길동 / OO미용실" style="width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'">
                     </div>
 
                     <!-- 2. 연락 방법 -->
@@ -522,7 +522,7 @@
                             <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="radio" name="contact_type" value="phone"> 전화번호</label>
                             <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="radio" name="contact_type" value="email"> 이메일</label>
                         </div>
-                        <input type="text" required placeholder="선택하신 연락처를 입력해주세요" style="width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'">
+                        <input type="text" id="contact-value-input" required placeholder="선택하신 연락처를 입력해주세요" style="width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'">
                     </div>
 
                     <!-- 3. 업종 -->
@@ -550,10 +550,11 @@
                     <!-- 5. 질문 -->
                     <div class="form-group" style="margin-bottom: 35px;">
                         <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #334155;">5. (선택) 가장 궁금하신 점이 있다면 남겨주세요</label>
-                        <textarea placeholder="자유롭게 작성해주세요" rows="3" style="width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; resize: vertical; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
+                        <textarea id="question-input" placeholder="자유롭게 작성해주세요" rows="3" style="width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; resize: vertical; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
                     </div>
 
-                    <button type="submit" class="btn-primary" style="width: 100%; font-size: 1.2rem; padding: 18px; border: none; cursor: pointer; border-radius: 30px;">제출하고 안내받기</button>
+                    <button type="submit" id="app-form-submit-btn" class="btn-primary" style="width: 100%; font-size: 1.2rem; padding: 18px; border: none; cursor: pointer; border-radius: 30px;">제출하고 안내받기</button>
+                    <p id="app-form-error" style="display:none; color:#ef4444; text-align:center; margin-top: 12px; font-size: 0.95rem;">전송에 실패했습니다. 잠시 후 다시 시도해주시거나 카카오톡으로 문의해주세요.</p>
                 </form>
             </div>
 
@@ -576,6 +577,9 @@
 
     <!-- Modal Form Script -->
     <script>
+        const SUPABASE_URL = 'https://vlclmbikpfaxhxjjqwsi.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_Ck99T-0loRBoPa8J7amcYg_YlUHkKxt';
+
         document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('application-modal');
             const openBtn = document.getElementById('open-app-modal');
@@ -636,20 +640,64 @@
                 if (e.target === modal) closeModal();
             });
 
-            appForm.addEventListener('submit', (e) => {
+            appForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                // UI 전환 애니메이션
-                formStep.style.opacity = '0';
-                setTimeout(() => {
-                    formStep.style.display = 'none';
-                    successStep.style.display = 'block';
-                    successStep.style.opacity = '0';
+
+                const submitBtn = document.getElementById('app-form-submit-btn');
+                const errorMsg = document.getElementById('app-form-error');
+                errorMsg.style.display = 'none';
+
+                const industryRadio = document.querySelector('input[name="industry"]:checked');
+                const industryValue = industryRadio && industryRadio.value === '기타'
+                    ? (document.getElementById('industry-other-input').value || '기타')
+                    : (industryRadio ? industryRadio.value : '');
+                const contactTypeRadio = document.querySelector('input[name="contact_type"]:checked');
+                const paymentRadio = document.querySelector('input[name="payment"]:checked');
+
+                const payload = {
+                    name: document.getElementById('name-input').value.trim(),
+                    contact_type: contactTypeRadio ? contactTypeRadio.value : '',
+                    contact_value: document.getElementById('contact-value-input').value.trim(),
+                    industry: industryValue,
+                    payment_method: paymentRadio ? paymentRadio.value : '',
+                    question: document.getElementById('question-input').value.trim(),
+                };
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = '전송 중...';
+
+                try {
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/applications`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!res.ok) throw new Error('submit failed');
+
+                    // UI 전환 애니메이션
+                    formStep.style.opacity = '0';
                     setTimeout(() => {
-                        formStep.style.opacity = '1';
-                        successStep.style.transition = 'opacity 0.4s ease';
-                        successStep.style.opacity = '1';
-                    }, 50);
-                }, 300);
+                        formStep.style.display = 'none';
+                        successStep.style.display = 'block';
+                        successStep.style.opacity = '0';
+                        setTimeout(() => {
+                            formStep.style.opacity = '1';
+                            successStep.style.transition = 'opacity 0.4s ease';
+                            successStep.style.opacity = '1';
+                        }, 50);
+                    }, 300);
+                } catch (err) {
+                    errorMsg.style.display = 'block';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '제출하고 안내받기';
+                }
             });
         });
     </script>
