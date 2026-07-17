@@ -24,6 +24,84 @@ body {
     scroll-margin-top: 100px;
 }
 
+/* 우측 하단 플로팅 버튼 (무료체험 CTA + 맨 위로) */
+.floating-actions {
+    position: fixed;
+    right: 24px;
+    bottom: 30px;
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.floating-actions.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.floating-cta-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--primary-grad);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+    text-decoration: none;
+    box-shadow: 0 10px 25px -8px rgba(99, 102, 241, 0.6);
+    transition: transform 0.2s ease;
+}
+
+.floating-cta-btn:hover {
+    transform: scale(1.08);
+}
+
+.scroll-top-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: white;
+    color: #4F46E5;
+    border: 1px solid var(--border-color);
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 16px -6px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease;
+}
+
+.scroll-top-btn:hover {
+    transform: translateY(-3px);
+}
+
+@media (max-width: 768px) {
+    .floating-actions {
+        right: 16px;
+        bottom: 20px;
+    }
+    .floating-cta-btn {
+        width: 56px;
+        height: 56px;
+        font-size: 11px;
+    }
+    .scroll-top-btn {
+        width: 38px;
+        height: 38px;
+    }
+}
+
 /* 1구역: GNB 상단바 */
 .gnb {
     display: flex;

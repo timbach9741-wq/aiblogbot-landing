@@ -19,6 +19,12 @@
         <a href="#download" class="btn-trial">3회 무료 이용하기</a>
     </nav>
 
+    <!-- 우측 하단 플로팅 버튼: 무료체험 CTA + 맨 위로 -->
+    <div id="floating-actions" class="floating-actions">
+        <a href="#" id="open-app-modal-floating" class="floating-cta-btn">3회<br>무료<br>이용하기</a>
+        <button id="scroll-top-btn" class="scroll-top-btn" aria-label="맨 위로 이동">↑</button>
+    </div>
+
     <!-- 2구역: 메인 히어로 섹션 -->
     <header class="hero">
         <div class="hero-content">
@@ -611,6 +617,10 @@
             // 상단 다운로드 섹션의 "지금 바로 신청하기" 버튼도 동일하게 모달 팝업 열기
             const openBtnDownload = document.getElementById('open-app-modal-download');
             if(openBtnDownload) openBtnDownload.addEventListener('click', openModal);
+
+            // 우측 하단 플로팅 CTA 버튼도 동일하게 모달 팝업 열기
+            const openBtnFloating = document.getElementById('open-app-modal-floating');
+            if(openBtnFloating) openBtnFloating.addEventListener('click', openModal);
 
             // 추가: 가격표의 신청하기 버튼들 클릭 시에도 동일하게 모달 팝업 열기
             const priceBtns = document.querySelectorAll('.pricing-grid .btn-buy');
