@@ -37,28 +37,30 @@ create policy "anyone_can_submit_application"
   to anon
   with check (true);
 
--- 5. 로그인한 관리자만 조회/수정 가능
-create policy "admin_can_read_applications"
+-- 5. 딱 대표님 계정(timbach9741@gmail.com)만 조회/수정 가능
+--    "authenticated"만 체크하면 회원가입만 하면 아무나 데이터를 볼 수 있으므로,
+--    반드시 이메일까지 특정해서 잠가야 한다.
+create policy "admin_only_read_applications"
   on applications for select
   to authenticated
-  using (true);
+  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
 
-create policy "admin_can_update_applications"
+create policy "admin_only_update_applications"
   on applications for update
   to authenticated
-  using (true);
+  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
 
-create policy "admin_can_read_licenses"
+create policy "admin_only_read_licenses"
   on licenses for select
   to authenticated
-  using (true);
+  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
 
-create policy "admin_can_write_licenses"
+create policy "admin_only_write_licenses"
   on licenses for insert
   to authenticated
-  with check (true);
+  with check (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
 
-create policy "admin_can_update_licenses"
+create policy "admin_only_update_licenses"
   on licenses for update
   to authenticated
-  using (true);
+  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
