@@ -37,41 +37,41 @@ create policy "anyone_can_submit_application"
   to anon
   with check (true);
 
--- 5. 딱 대표님 계정(timbach9741@gmail.com)만 조회/수정 가능
+-- 5. 딱 대표님 계정(YOUR_ADMIN_EMAIL_HERE)만 조회/수정 가능
 --    "authenticated"만 체크하면 회원가입만 하면 아무나 데이터를 볼 수 있으므로,
 --    반드시 이메일까지 특정해서 잠가야 한다.
 create policy "admin_only_read_applications"
   on applications for select
   to authenticated
-  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
 
 create policy "admin_only_update_applications"
   on applications for update
   to authenticated
-  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
 
 create policy "admin_only_read_licenses"
   on licenses for select
   to authenticated
-  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
 
 create policy "admin_only_write_licenses"
   on licenses for insert
   to authenticated
-  with check (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+  with check (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
 
 create policy "admin_only_update_licenses"
   on licenses for update
   to authenticated
-  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
 
 -- 6. 삭제 권한 (테스트 데이터 정리용)
 create policy "admin_only_delete_applications"
   on applications for delete
   to authenticated
-  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
 
 create policy "admin_only_delete_licenses"
   on licenses for delete
   to authenticated
-  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
