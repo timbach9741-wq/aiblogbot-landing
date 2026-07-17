@@ -121,7 +121,7 @@
                 <option value="1">1개월</option>
                 <option value="3">3개월</option>
                 <option value="6">6개월</option>
-                <option value="">영구</option>
+                <option value="0">1일 (특수 발급용)</option>
             </select>
             <button type="submit">발급 기록 저장</button>
         </form>
@@ -279,7 +279,7 @@ async function loadLicenses() {
             <td>${row.contact_value || '-'}</td>
             <td>${row.mac_address}</td>
             <td style="font-family:monospace; font-size:0.8rem;">${row.license_key}</td>
-            <td>${row.period_months ? row.period_months + '개월' : '영구'}</td>
+            <td>${row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구')}</td>
             <td>${row.issued_at}</td>
             <td>${row.expires_at || '-'}</td>
             <td>${badge}</td>
@@ -293,7 +293,7 @@ async function loadLicenses() {
             etr.innerHTML = `
                 <td>${row.customer_name}</td>
                 <td>${row.contact_value || '-'}</td>
-                <td>${row.period_months ? row.period_months + '개월' : '영구'}</td>
+                <td>${row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구')}</td>
                 <td>${row.expires_at}</td>
                 <td>D-${d}</td>
             `;
@@ -310,18 +310,25 @@ function addMonths(dateStr, months) {
     return d.toISOString().slice(0, 10);
 }
 
+function addDays(dateStr, days) {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+}
+
 document.getElementById('license-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const period = document.getElementById('lic-period').value;
+    const isOneDay = period === '0';
     const issuedAt = new Date().toISOString().slice(0, 10);
     const payload = {
         customer_name: document.getElementById('lic-name').value.trim(),
         contact_value: document.getElementById('lic-contact').value.trim(),
         mac_address: document.getElementById('lic-mac').value.trim(),
         license_key: document.getElementById('lic-key').value.trim(),
-        period_months: period ? parseInt(period, 10) : null,
+        period_months: parseInt(period, 10),
         issued_at: issuedAt,
-        expires_at: period ? addMonths(issuedAt, parseInt(period, 10)) : null,
+        expires_at: isOneDay ? addDays(issuedAt, 1) : addMonths(issuedAt, parseInt(period, 10)),
     };
     await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
         method: 'POST',
