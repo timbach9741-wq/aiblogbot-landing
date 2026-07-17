@@ -58,6 +58,11 @@
     select.status-select {
         padding: 5px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 0.85rem;
     }
+    .delete-btn {
+        background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+        border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+    }
+    .delete-btn:hover { background: #fecaca; }
 
     .table-scroll { overflow-x: auto; }
 
@@ -140,7 +145,7 @@
         <div class="table-scroll">
             <table id="applications-table">
                 <thead>
-                    <tr><th>신청일시</th><th>이름</th><th>연락방법</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th></tr>
+                    <tr><th>신청일시</th><th>이름</th><th>연락방법</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th><th>삭제</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -214,6 +219,18 @@ async function loadApplications() {
             });
         });
 
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = '삭제';
+        deleteBtn.addEventListener('click', async () => {
+            if (!confirm(`"${row.name}" 신청 내역을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+            await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+                method: 'DELETE',
+                headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+            });
+            loadApplications();
+        });
+
         tr.innerHTML = `
             <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</td>
             <td>${row.name}</td>
@@ -223,8 +240,10 @@ async function loadApplications() {
             <td>${row.payment_method}</td>
             <td>${row.question || '-'}</td>
             <td></td>
+            <td></td>
         `;
-        tr.lastElementChild.appendChild(select);
+        tr.children[7].appendChild(select);
+        tr.children[8].appendChild(deleteBtn);
         tbody.appendChild(tr);
     });
 }

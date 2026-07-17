@@ -64,3 +64,14 @@ create policy "admin_only_update_licenses"
   on licenses for update
   to authenticated
   using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+
+-- 6. 삭제 권한 (테스트 데이터 정리용)
+create policy "admin_only_delete_applications"
+  on applications for delete
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
+
+create policy "admin_only_delete_licenses"
+  on licenses for delete
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'timbach9741@gmail.com');
