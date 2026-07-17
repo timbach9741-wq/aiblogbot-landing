@@ -16,6 +16,7 @@ body {
     margin: 0;
     overflow-x: hidden;
     line-height: 1.6;
+    word-break: keep-all;
 }
 
 /* 상단 고정 메뉴바에 앵커 이동 목표가 가려지지 않도록 여유 공간 확보 */
@@ -806,6 +807,15 @@ section h2 {
     .hero-image {
         margin-top: 60px;
     }
+
+    /* 후기 2열이 좁은 화면에서 너무 눌려 카드 내용이 안 읽히므로, 모바일에서는
+       1열만 남기고 그 1열이 전체 너비를 쓰게 한다. */
+    .review-marquee-container {
+        height: 420px;
+    }
+    .marquee-col.scroll-down {
+        display: none;
+    }
     
     .gnb {
         padding: 15px 20px;
@@ -821,5 +831,17 @@ section h2 {
     
     .price-card.premium {
         transform: scale(1);
+    }
+
+    /* 킬러피처 3열 강제 배치가 좁은 화면에서 카드를 짓눌러 텍스트가 안 읽히는 걸 막고,
+       세로로 쌓이게 바꾼다 (PC에서만 3개씩 나란히, 모바일에서는 1개씩). */
+    .killer-feature-row {
+        flex-direction: column !important;
+        align-items: stretch;
+    }
+    .killer-feature-row > .guide-card {
+        max-width: 100% !important;
+        flex-basis: auto !important;
+        width: 100%;
     }
 }
