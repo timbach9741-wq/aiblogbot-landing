@@ -115,13 +115,14 @@
         <form id="license-form">
             <input type="text" id="lic-name" placeholder="고객명 / 상호명" required>
             <input type="text" id="lic-contact" placeholder="연락처 (카카오톡ID 등)">
-            <input type="text" id="lic-mac" placeholder="MAC 주소" required>
+            <input type="text" id="lic-mac" placeholder="MAC 주소 (체험판은 선택)">
             <input type="text" id="lic-key" placeholder="발급된 라이선스 키" required>
             <select id="lic-period">
                 <option value="1">1개월</option>
                 <option value="3">3개월</option>
                 <option value="6">6개월</option>
                 <option value="0">1일 (특수 발급용)</option>
+                <option value="trial">체험판 (3회)</option>
             </select>
             <button type="submit">발급 기록 저장</button>
         </form>
@@ -268,6 +269,8 @@ async function loadLicenses() {
         if (d !== null) {
             if (d < 0) { badge = '<span class="badge badge-expired">만료됨</span>'; rowClass = 'expired'; }
             else if (d <= 7) { badge = `<span class="badge badge-soon">D-${d}</span>`; rowClass = 'expiring'; }
+        } else if (row.period_months === -1) {
+            badge = '<span class="badge badge-ok">체험</span>';
         } else {
             badge = '<span class="badge badge-ok">영구</span>';
         }
@@ -279,7 +282,7 @@ async function loadLicenses() {
             <td>${row.contact_value || '-'}</td>
             <td>${row.mac_address}</td>
             <td style="font-family:monospace; font-size:0.8rem;">${row.license_key}</td>
-            <td>${row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구')}</td>
+            <td>${row.period_months === -1 ? '체험(3회)' : (row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구'))}</td>
             <td>${row.issued_at}</td>
             <td>${row.expires_at || '-'}</td>
             <td>${badge}</td>
@@ -293,7 +296,7 @@ async function loadLicenses() {
             etr.innerHTML = `
                 <td>${row.customer_name}</td>
                 <td>${row.contact_value || '-'}</td>
-                <td>${row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구')}</td>
+                <td>${row.period_months === -1 ? '체험(3회)' : (row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구'))}</td>
                 <td>${row.expires_at}</td>
                 <td>D-${d}</td>
             `;
@@ -316,19 +319,31 @@ function addDays(dateStr, days) {
     return d.toISOString().slice(0, 10);
 }
 
+const licKeyInput = document.getElementById('lic-key');
+document.getElementById('lic-period').addEventListener('change', (e) => {
+    if (e.target.value === 'trial') {
+        licKeyInput.value = 'TRIAL-3RUNS';
+        licKeyInput.required = false;
+    } else {
+        if (licKeyInput.value === 'TRIAL-3RUNS') licKeyInput.value = '';
+        licKeyInput.required = true;
+    }
+});
+
 document.getElementById('license-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const period = document.getElementById('lic-period').value;
     const isOneDay = period === '0';
+    const isTrial = period === 'trial';
     const issuedAt = new Date().toISOString().slice(0, 10);
     const payload = {
         customer_name: document.getElementById('lic-name').value.trim(),
         contact_value: document.getElementById('lic-contact').value.trim(),
         mac_address: document.getElementById('lic-mac').value.trim(),
-        license_key: document.getElementById('lic-key').value.trim(),
-        period_months: parseInt(period, 10),
+        license_key: document.getElementById('lic-key').value.trim() || 'TRIAL-3RUNS',
+        period_months: isTrial ? -1 : parseInt(period, 10),
         issued_at: issuedAt,
-        expires_at: isOneDay ? addDays(issuedAt, 1) : addMonths(issuedAt, parseInt(period, 10)),
+        expires_at: isTrial ? null : (isOneDay ? addDays(issuedAt, 1) : addMonths(issuedAt, parseInt(period, 10))),
     };
     await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
         method: 'POST',
