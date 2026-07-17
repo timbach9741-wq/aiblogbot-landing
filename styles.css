@@ -18,6 +18,11 @@ body {
     line-height: 1.6;
 }
 
+/* 상단 고정 메뉴바에 앵커 이동 목표가 가려지지 않도록 여유 공간 확보 */
+#features, #pricing, #faq, #download {
+    scroll-margin-top: 100px;
+}
+
 /* 1구역: GNB 상단바 */
 .gnb {
     display: flex;
