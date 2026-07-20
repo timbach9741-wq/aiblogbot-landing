@@ -267,13 +267,13 @@
 
         <!-- Application CTA -->
         <div class="application-cta glass-card" style="margin-top: 40px; text-align: center; padding: 50px 30px; max-width: 800px; margin-left: auto; margin-right: auto;">
-            <h3 style="font-size: 1.6rem; color: #1e293b; margin-bottom: 20px;">카드 결제, 계좌이체 등 편하신 방법으로 안내해드립니다.</h3>
+            <h3 style="font-size: 1.6rem; color: #1e293b; margin-bottom: 20px;">계좌이체로 편하게 결제하실 수 있도록 안내해드립니다.</h3>
             <p style="color: #64748b; font-size: 1.15rem; margin-bottom: 35px; line-height: 1.6;">아래 버튼을 눌러 몇 가지만 알려주시면, <br>가장 빠른 결제·설치 방법을 30분 내로 안내드릴게요.</p>
             <a href="#" id="open-app-modal" class="btn-primary" style="font-size: 1.3rem; padding: 20px 50px; display: inline-block;">신청하기</a>
             <p style="margin-top: 20px; font-size: 1rem; color: #94a3b8; font-weight: 500;">⏱️ 카카오톡 문의 기준 평균 30분 내 답변</p>
 
             <details style="margin-top: 30px; text-align: left; max-width: 480px; margin-left: auto; margin-right: auto;">
-                <summary style="cursor: pointer; text-align: center; color: #94a3b8; font-size: 0.95rem; list-style: none;">이미 사용해보셨나요? 카톡으로 바로 결제 안내받기</summary>
+                <summary style="cursor: pointer; text-align: center; color: #4338ca; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 20px; padding: 12px 20px; font-size: 1.05rem; font-weight: 700; list-style: none;">💳 이미 사용해보셨나요? 카톡으로 바로 결제 안내받기</summary>
                 <div style="margin-top: 15px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; color: #475569; line-height: 1.7;">
                     <div style="font-weight: 700; color: #1e293b;">입금 계좌: 카카오뱅크 3333-37-9662102 (예금주: 이홍석)</div>
                     <div style="margin-top: 4px;">이용권: 1개월 89,000원 / 3개월 239,000원 / 6개월 449,000원</div>
@@ -545,13 +545,13 @@
                         <input type="text" id="industry-other-input" placeholder="기타 업종 입력" style="display: none; width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'">
                     </div>
 
-                    <!-- 4. 결제 방법 -->
+                    <!-- 4. 결제 안내 -->
                     <div class="form-group" style="margin-bottom: 25px;">
-                        <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #334155;">4. 선호하시는 결제 방법 <span style="color: #ef4444;">*</span></label>
-                        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; color: #475569;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="radio" name="payment" value="카드 결제" required> 카드 결제 (크몽 경유 안내)</label>
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="radio" name="payment" value="계좌이체"> 계좌이체</label>
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="radio" name="payment" value="미정"> 아직 잘 모르겠음, 상담 후 결정</label>
+                        <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #334155;">4. 결제 안내</label>
+                        <div style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; color: #475569; line-height: 1.6;">
+                            결제는 <b>계좌이체</b>로 안내드립니다.<br>
+                            입금 계좌: <b>카카오뱅크 3333-37-9662102 (예금주: 이홍석)</b><br>
+                            제출해주시면 이용권 금액과 함께 다시 한 번 안내드릴게요.
                         </div>
                     </div>
 
@@ -665,14 +665,13 @@
                     ? (document.getElementById('industry-other-input').value || '기타')
                     : (industryRadio ? industryRadio.value : '');
                 const contactTypeRadio = document.querySelector('input[name="contact_type"]:checked');
-                const paymentRadio = document.querySelector('input[name="payment"]:checked');
 
                 const payload = {
                     name: document.getElementById('name-input').value.trim(),
                     contact_type: contactTypeRadio ? contactTypeRadio.value : '',
                     contact_value: document.getElementById('contact-value-input').value.trim(),
                     industry: industryValue,
-                    payment_method: paymentRadio ? paymentRadio.value : '',
+                    payment_method: '계좌이체',
                     question: document.getElementById('question-input').value.trim(),
                 };
 
