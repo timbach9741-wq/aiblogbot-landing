@@ -238,7 +238,7 @@
                 <div class="price">89,000원</div>
                 <div style="color: #64748b; font-size: 0.95rem; margin-top: 5px; margin-bottom: 20px; font-weight: 500;">결제 후 즉시 이용 가능</div>
                 
-                <a href="#pricing" class="btn-buy" id="btn-standard">1개월 신청하기</a>
+                <a href="#pricing" class="btn-buy" id="btn-standard" data-plan="1개월" data-price="89,000원">1개월 신청하기</a>
             </div>
             <div class="price-card premium">
                 <div class="best-badge">⭐ 추천 플랜 (약 10% 할인) ⭐</div>
@@ -246,7 +246,7 @@
                 <div class="price">239,000원</div>
                 <div style="color: #64748b; font-size: 0.95rem; margin-top: 5px; margin-bottom: 20px; font-weight: 500;">월 79,667원 · 1개월권 대비 10% 저렴</div>
                 
-                <a href="#pricing" class="btn-buy premium-btn" id="btn-deluxe">3개월 신청하기</a>
+                <a href="#pricing" class="btn-buy premium-btn" id="btn-deluxe" data-plan="3개월" data-price="239,000원">3개월 신청하기</a>
             </div>
             <div class="price-card standard">
                 <div class="best-badge" style="background:#8b5cf6;">🔥 파격 특가 (약 16% 할인) 🔥</div>
@@ -254,7 +254,7 @@
                 <div class="price">449,000원</div>
                 <div style="color: #64748b; font-size: 0.95rem; margin-top: 5px; margin-bottom: 20px; font-weight: 500;">월 74,833원 · 가장 합리적인 선택</div>
                 
-                <a href="#pricing" class="btn-buy" id="btn-premium">6개월 신청하기</a>
+                <a href="#pricing" class="btn-buy" id="btn-premium" data-plan="6개월" data-price="449,000원">6개월 신청하기</a>
             </div>
         </div>
         
@@ -271,16 +271,6 @@
             <p style="color: #64748b; font-size: 1.15rem; margin-bottom: 35px; line-height: 1.6;">아래 버튼을 눌러 몇 가지만 알려주시면, <br>가장 빠른 결제·설치 방법을 30분 내로 안내드릴게요.</p>
             <a href="#" id="open-app-modal" class="btn-primary" style="font-size: 1.3rem; padding: 20px 50px; display: inline-block;">신청하기</a>
             <p style="margin-top: 20px; font-size: 1rem; color: #94a3b8; font-weight: 500;">⏱️ 카카오톡 문의 기준 평균 30분 내 답변</p>
-
-            <details style="margin-top: 30px; text-align: left; max-width: 480px; margin-left: auto; margin-right: auto;">
-                <summary style="cursor: pointer; text-align: center; color: #4338ca; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 20px; padding: 12px 20px; font-size: 1.05rem; font-weight: 700; list-style: none;">💳 이미 사용해보셨나요? 카톡으로 바로 결제 안내받기</summary>
-                <div style="margin-top: 15px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; color: #475569; line-height: 1.7;">
-                    <div style="font-weight: 700; color: #1e293b;">입금 계좌: 카카오뱅크 3333-37-9662102 (예금주: 이홍석)</div>
-                    <div style="margin-top: 4px;">이용권: 1개월 89,000원 / 3개월 239,000원 / 6개월 449,000원</div>
-                    <div style="margin-top: 10px;">입금 후 아래 카카오톡으로 <b>입금자명 + 원하시는 이용권</b>만 알려주시면 바로 다운로드 링크와 라이선스 키를 보내드립니다.</div>
-                    <a href="https://open.kakao.com/o/sDFwdqEi" target="_blank" rel="noopener" style="display: inline-block; margin-top: 15px; padding: 10px 22px; border-radius: 20px; background: #FEE500; color: #191919; font-weight: 700; text-decoration: none; font-size: 0.9rem;">💬 카카오톡으로 알려주기</a>
-                </div>
-            </details>
         </div>
         </div>
     </section>
@@ -549,6 +539,7 @@
                     <div class="form-group" style="margin-bottom: 25px;">
                         <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #334155;">4. 결제 안내</label>
                         <div style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; color: #475569; line-height: 1.6;">
+                            <div id="selected-plan-line" style="display: none; font-weight: 700; color: #1e293b; margin-bottom: 8px;">선택하신 이용권: <span id="selected-plan-text"></span></div>
                             결제는 <b>계좌이체</b>로 안내드립니다.<br>
                             입금 계좌: <b>카카오뱅크 3333-37-9662102 (예금주: 이홍석)</b><br>
                             제출해주시면 이용권 금액과 함께 다시 한 번 안내드릴게요.
@@ -614,8 +605,22 @@
             });
 
 
+            const selectedPlanLine = document.getElementById('selected-plan-line');
+            const selectedPlanText = document.getElementById('selected-plan-text');
+            let selectedPlan = '';
+
             const openModal = (e) => {
                 e.preventDefault();
+                const plan = e.currentTarget.dataset.plan;
+                const price = e.currentTarget.dataset.price;
+                if (plan && price) {
+                    selectedPlan = `${plan} ${price}`;
+                    selectedPlanText.textContent = selectedPlan;
+                    selectedPlanLine.style.display = 'block';
+                } else {
+                    selectedPlan = '';
+                    selectedPlanLine.style.display = 'none';
+                }
                 modal.style.display = 'flex';
                 formStep.style.display = 'block';
                 successStep.style.display = 'none';
@@ -671,7 +676,7 @@
                     contact_type: contactTypeRadio ? contactTypeRadio.value : '',
                     contact_value: document.getElementById('contact-value-input').value.trim(),
                     industry: industryValue,
-                    payment_method: '계좌이체',
+                    payment_method: selectedPlan ? `계좌이체 - ${selectedPlan}` : '계좌이체',
                     question: document.getElementById('question-input').value.trim(),
                 };
 
