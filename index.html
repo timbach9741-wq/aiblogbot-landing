@@ -328,6 +328,151 @@
         </div>
     </section>
 
+    <!-- 5.65구역: 설치/실행 문제해결 검색 코너 -->
+    <section id="troubleshooting" class="troubleshoot-section" style="padding: 80px 20px; background-color: #ffffff; border-top: 1px solid #e2e8f0;">
+        <div style="max-width: 900px; margin: 0 auto;">
+            <h2 style="font-size: 2.2rem; text-align: center; color: #0f172a; margin-bottom: 10px;">🛠️ 설치·실행 문제해결</h2>
+            <p style="text-align: center; color: #64748b; margin-bottom: 35px; font-size: 1.05rem;">컴퓨터가 익숙하지 않으셔도 괜찮아요. 겪고 계신 증상을 아래에 검색해보세요.</p>
+
+            <div style="margin-bottom: 30px; position: sticky; top: 10px; z-index: 10;">
+                <input type="text" id="ts-search" placeholder="🔍 예: 바이러스, 실행이 안돼요, 로그인, 사진, 크롬..." style="width: 100%; padding: 18px 20px; border: 2px solid #cbd5e1; border-radius: 14px; font-size: 1.05rem; outline: none; box-sizing: border-box; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                <p id="ts-no-result" style="display:none; text-align:center; color:#94a3b8; margin-top: 15px;">일치하는 항목이 없어요. 카카오톡 채널로 문의해주시면 바로 도와드릴게요!</p>
+            </div>
+
+            <style>
+                .ts-details { background: white; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); overflow: hidden; }
+                .ts-summary { font-size: 1.1rem; color: #1e293b; font-weight: 700; padding: 20px 25px; cursor: pointer; list-style: none; position: relative; }
+                .ts-summary::marker { display: none; }
+                .ts-summary::-webkit-details-marker { display: none; }
+                .ts-summary::after { content: '+'; position: absolute; right: 25px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: #94a3b8; transition: transform 0.2s; }
+                .ts-details[open] .ts-summary::after { content: '-'; transform: translateY(-50%); }
+                .ts-content { padding: 0 25px 25px 25px; color: #475569; line-height: 1.75; border-top: 1px solid #f1f5f9; margin-top: 5px; padding-top: 20px; }
+                .ts-tag { display: inline-block; background: #eef2ff; color: #4338ca; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-right: 6px; margin-bottom: 6px; }
+            </style>
+
+            <details class="ts-details" data-ts-keywords="다운로드 바이러스 검사 무시 경고">
+                <summary class="ts-summary">Q. 다운로드할 때 "바이러스를 검사할 수 없습니다"라는 경고가 떠요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">다운로드 단계</span>
+                    <p>A. 정상입니다, 놀라지 않으셔도 돼요! 구글드라이브는 실행 파일(.exe)은 자체적으로 바이러스 검사를 못 해서, 위험 여부와 상관없이 이 문구를 무조건 띄워요.</p>
+                    <p><b>해결 방법:</b> 경고창 아래쪽의 <b>"무시하고 다운로드"</b> 버튼을 눌러주시면 돼요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="실행 windows에서 pc를 보호했습니다 스마트스크린 파란 경고창">
+                <summary class="ts-summary">Q. 실행하면 "Windows에서 PC를 보호했습니다"라는 파란 화면이 떠요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">실행 단계</span>
+                    <p>A. 이것도 정상이에요. 저희 프로그램은 아직 정식 인증서(마이크로소프트에 큰돈을 내고 받는 도장 같은 것)가 없어서 뜨는 화면이고, 바이러스와는 무관해요.</p>
+                    <p><b>해결 방법:</b> 화면 안의 작은 글씨 <b>"추가 정보"</b>를 클릭 → 그 아래 나타나는 <b>"실행"</b> 버튼을 누르면 정상적으로 켜져요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="다운로드 파일 차단 차단해제 속성 마크오브더웹 실행이 안돼요 안열려요 안켜져요">
+                <summary class="ts-summary">Q. 다운로드는 됐는데, 파일을 더블클릭해도 아무 반응이 없어요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">실행 단계</span>
+                    <p>이럴 땐 아래 순서대로 하나씩 확인해주세요.</p>
+                    <p><b>① 파일 차단 해제 확인</b><br>
+                    다운로드한 <code>AIBlogBot_V3_Setup.exe</code> 파일 위에서 마우스 오른쪽 클릭 → <b>속성</b> → "일반" 탭 맨 아래에 <b>"차단 해제"</b> 체크박스가 있으면 체크 → 적용 → 확인. 그 다음 다시 실행해보세요.</p>
+                    <p><b>② 백신이 조용히 막았는지 확인</b><br>
+                    Windows 보안 앱 → 바이러스 및 위협 방지 → 보호 기록에 최근 "차단됨/격리됨" 항목이 있는지 확인해주세요. 만약 안랩(AhnLab) 같은 별도 백신 프로그램을 쓰고 계시면, 잠깐 꺼두고 다시 실행해보세요.</p>
+                    <p><b>③ 최신 버전으로 다시 받기</b><br>
+                    혹시 예전에 받아두신 파일이라면, 최근 업데이트에서 이 문제 자체가 수정됐을 수 있어요. 신청폼에서 다운로드 링크를 다시 받아 새로 설치해보세요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="설치 아이콘 눌러도 안됨 반응없음 켜지지않음">
+                <summary class="ts-summary">Q. 설치는 완료됐는데, 바탕화면 아이콘을 눌러도 프로그램이 안 켜져요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">실행 단계</span>
+                    <p>A. 위 항목("더블클릭해도 반응 없음")과 같은 순서로 확인해주세요. 특히 <b>제어판(설정) → 프로그램 제거에서 기존 것을 완전히 삭제</b>한 뒤, 최신 버전을 새로 받아 재설치하시면 대부분 해결돼요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="api 키가 잘못되었다 오류 gemini 연결 안됨">
+                <summary class="ts-summary">Q. "API 키가 잘못되었다"는 메시지가 뜨면서 안 켜져요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">최초 설정</span>
+                    <p>A. 복사하신 API 키 앞뒤에 실수로 빈칸(띄어쓰기)이 딸려 들어갔을 가능성이 커요.</p>
+                    <p><b>해결 방법:</b> 메모장에 한 번 붙여넣어 보시고, 빈칸 없이 글자만 꽉 차게 다시 복사해서 프로그램에 넣어주세요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="크롬 창 오류 멈춤 selenium_profile 세션">
+                <summary class="ts-summary">Q. 크롬(브라우저) 창이 열리다가 멈추거나 오류가 나요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">실행 중</span>
+                    <p>A. 다른 크롬 창을 전부 닫고 프로그램을 다시 실행해보세요. 대부분 재시도하면 바로 해결돼요.</p>
+                    <p>그래도 계속되면, 프로그램이 설치된 폴더 안의 <code>selenium_profile</code> 폴더를 삭제해보세요 (네이버 로그인 정보가 초기화되어 다시 로그인해야 하지만, 문제는 대부분 사라져요).</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="로그인 캡차 보안인증 네이버 자동로그인 안됨">
+                <summary class="ts-summary">Q. 네이버 로그인 화면에서 캡차나 보안 인증이 떠요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">실행 중</span>
+                    <p>A. 정상이에요! 이 컴퓨터에서 그 네이버 계정으로 처음 로그인하면 네이버 보안 정책상 한 번은 직접 인증이 필요해요.</p>
+                    <p><b>해결 방법:</b> 화면에 뜬 브라우저 창에서 직접 로그인/인증을 마치고, 프로그램 안내창의 [확인]을 눌러주세요. 이후로는 자동으로 로그인돼요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="블로그 글 안올라감 발행 안됨 사라짐">
+                <summary class="ts-summary">Q. 작업이 끝났다는데, 블로그에 글이 안 보여요!</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">사용 중</span>
+                    <p>A. 완전 정상이에요! 안전을 위해 프로그램은 절대 스스로 글을 발행하지 않고, 항상 <b>[임시저장함]</b>에만 저장해둬요.</p>
+                    <p>네이버 블로그 앱에서 [임시저장글]로 들어가 내용을 확인하고, 직접 [발행] 버튼을 눌러야 사람들에게 보여요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="복사 붙여넣기 ctrl c 클립보드 엉뚱한 내용">
+                <summary class="ts-summary">Q. 프로그램이 작업하는 동안 다른 걸 복사(Ctrl+C)해도 되나요?</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">사용 중</span>
+                    <p>A. 안 돼요! 제목/본문/해시태그는 클립보드에 복사한 뒤 붙여넣는 방식으로 입력돼서, 작업 중 다른 걸 복사하면 엉뚱한 내용이 블로그 글에 들어갈 수 있어요. 다만 프로그램 창을 직접 클릭/타이핑하지만 않으면, 다른 작업(보기만 하는 것)은 하셔도 괜찮아요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="사진 많이 오래걸림 느림 시간">
+                <summary class="ts-summary">Q. 사진을 많이(20~30장) 넣었더니 너무 오래 걸려요.</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">사용 중</span>
+                    <p>A. 사진이 많을수록 AI가 분석하고 업로드하는 시간이 더 걸리는 게 정상이에요. 멈춘 것처럼 보여도 창을 닫지 마시고 기다려주세요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="동시실행 두개 중복 실행 충돌">
+                <summary class="ts-summary">Q. 프로그램을 두 개 동시에 켜도 되나요?</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">사용 중</span>
+                    <p>A. 안 돼요! 두 개 이상 동시에 켜면 크롬 프로필이 서로 충돌해서 오류가 날 수 있어요. 한 번에 하나씩만 실행해주세요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="무료체험 3회 소진 끝남 만료">
+                <summary class="ts-summary">Q. 무료체험 3회를 다 쓰면 어떻게 되나요?</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">라이선스</span>
+                    <p>A. 라이선스 오류 메시지가 뜨면 무료체험이 모두 끝난 거예요. 계속 쓰시려면 정식 라이선스 구매가 필요해요. 아래 "신청하기"에서 원하는 기간을 선택해주세요.</p>
+                </div>
+            </details>
+
+            <details class="ts-details" data-ts-keywords="맥 mac 아이폰 안드로이드 스마트폰 태블릿 윈도우버전 10 11 32비트 64비트">
+                <summary class="ts-summary">Q. 맥북(Mac)이나 스마트폰, 오래된 윈도우에서도 쓸 수 있나요?</summary>
+                <div class="ts-content">
+                    <span class="ts-tag">설치 전 확인</span>
+                    <p>A. 아쉽게도 <b>윈도우(Windows) 컴퓨터 전용</b>이에요. 맥북·아이폰·안드로이드에서는 실행이 안 돼요.</p>
+                    <p>윈도우도 <b>10 또는 11, 64비트</b> 기준으로 만들어져서, 너무 오래된 윈도우 버전에서는 설치 후 실행이 안 될 수 있어요.</p>
+                </div>
+            </details>
+
+            <p style="text-align: center; margin-top: 35px; color: #64748b;">
+                여기서 해결이 안 되면 <a href="https://open.kakao.com/o/sDFwdqEi" target="_blank" rel="noopener" style="color: #4338ca; font-weight: 700;">💬 카카오톡 채널로 바로 문의</a>해주세요. 실제 담당자가 직접 도와드려요.
+            </p>
+        </div>
+    </section>
+
     <!-- 5.7구역: 정책 및 정보 고시 -->
     <section id="policy" class="policy-section" style="padding: 60px 20px; background-color: #ffffff; border-top: 1px solid #e2e8f0;">
         <div style="max-width: 900px; margin: 0 auto;">
@@ -767,6 +912,37 @@
                 }
             });
         });
+    </script>
+
+    <!-- 문제해결 검색 -->
+    <script>
+        (function() {
+            const input = document.getElementById('ts-search');
+            if (!input) return;
+            const items = Array.from(document.querySelectorAll('#troubleshooting .ts-details'));
+            const noResult = document.getElementById('ts-no-result');
+
+            input.addEventListener('input', () => {
+                const query = input.value.trim().toLowerCase();
+                let visibleCount = 0;
+
+                items.forEach(item => {
+                    const keywords = (item.dataset.tsKeywords || '').toLowerCase();
+                    const text = item.textContent.toLowerCase();
+                    const matches = !query || keywords.includes(query) || text.includes(query);
+                    item.style.display = matches ? 'block' : 'none';
+                    // 검색어가 있을 때는 결과를 펼쳐서 바로 보여준다.
+                    if (query && matches) {
+                        item.open = true;
+                    } else if (!query) {
+                        item.open = false;
+                    }
+                    if (matches) visibleCount++;
+                });
+
+                noResult.style.display = visibleCount === 0 ? 'block' : 'none';
+            });
+        })();
     </script>
 </body>
 </html>
