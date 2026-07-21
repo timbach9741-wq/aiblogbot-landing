@@ -700,12 +700,22 @@ section h2 {
     top: -14px;
     left: 50%;
     transform: translateX(-50%);
+    /* left:50%+transform으로 중앙 정렬하면, width를 안 정해줄 때 브라우저가
+       transform 적용 전(카드 절반 너비) 기준으로 줄바꿈 여부를 계산해버려서
+       실제로는 자리가 충분한데도 글자가 어중간하게 줄바꿈됐다. width를
+       내용에 딱 맞게(max-content) 고정하고 줄바꿈을 막아서, 화면이 좁아
+       카드 자체가 줄어드는 경우에만 자연스럽게 두 줄로 넘어가게 한다. */
+    width: max-content;
+    max-width: min(90vw, 280px);
+    white-space: normal;
     background: linear-gradient(135deg, #F43F5E, #FB923C);
     color: white;
-    padding: 6px 18px;
-    border-radius: 30px;
+    padding: 8px 20px;
+    border-radius: 20px;
     font-size: 13px;
     font-weight: 800;
+    line-height: 1.4;
+    text-align: center;
     box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3);
 }
 
