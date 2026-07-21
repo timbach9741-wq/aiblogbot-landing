@@ -212,9 +212,14 @@
 
         <div id="quick-issue-result">
             <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">발급된 라이선스 키 (복사해서 카카오톡으로 전달하세요)</div>
-            <div class="key-row">
+            <div class="key-row" style="margin-bottom: 14px;">
                 <input type="text" id="quick-issue-key" readonly>
                 <button type="button" id="quick-issue-copy">복사</button>
+            </div>
+            <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">🎁 VVIP 보너스 자료 (키와 함께 링크도 보내주세요)</div>
+            <div style="display: flex; gap: 8px;">
+                <a id="quick-issue-guide-usage" href="#" target="_blank" rel="noopener" style="flex:1; text-align:center; padding:10px; border-radius:8px; background:#eef2ff; border:1px solid #c7d2fe; color:#4338ca; font-weight:bold; text-decoration:none; font-size:0.85rem;">📖 사용 가이드</a>
+                <a id="quick-issue-guide-keyword" href="#" target="_blank" rel="noopener" style="flex:1; text-align:center; padding:10px; border-radius:8px; background:#eef2ff; border:1px solid #c7d2fe; color:#4338ca; font-weight:bold; text-decoration:none; font-size:0.85rem;">💰 수익성 키워드 가이드</a>
             </div>
         </div>
 
@@ -468,6 +473,9 @@ function openQuickIssue(row) {
     document.getElementById('quick-issue-period').value = '30';
     document.getElementById('quick-issue-result').style.display = 'none';
     document.getElementById('quick-issue-key').value = '';
+    const nameParam = encodeURIComponent(row.name || '고객');
+    document.getElementById('quick-issue-guide-usage').href = `guides/usage-guide.html?name=${nameParam}`;
+    document.getElementById('quick-issue-guide-keyword').href = `guides/keyword-guide.html?name=${nameParam}`;
     quickIssueModal.style.display = 'flex';
 }
 
