@@ -76,6 +76,44 @@
         border-radius: 8px; font-weight: 700; cursor: pointer;
     }
     .empty-msg { color: #9ca3af; padding: 20px 0; text-align: center; }
+
+    .issue-btn {
+        background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;
+        border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+    }
+    .issue-btn:hover { background: #e0e7ff; }
+
+    .modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center;
+    }
+    .modal-box {
+        background: #fff; border-radius: 14px; padding: 28px; width: 90%; max-width: 420px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .modal-box h3 { margin-top: 0; margin-bottom: 6px; }
+    .modal-box .modal-sub { color: #6b7280; font-size: 0.88rem; margin-bottom: 18px; }
+    .modal-box label { display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; color: #374151; }
+    .modal-box input, .modal-box select {
+        width: 100%; padding: 11px; border: 1px solid #d1d5db; border-radius: 8px;
+        font-size: 0.95rem; margin-bottom: 16px; box-sizing: border-box;
+    }
+    .modal-box .modal-btn-row { display: flex; gap: 10px; }
+    .modal-box .modal-btn-row button {
+        flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;
+    }
+    #quick-issue-generate { background: #6366f1; color: #fff; }
+    #quick-issue-cancel { background: #f3f4f6; color: #374151; }
+    #quick-issue-result {
+        display: none; margin-top: 4px; background: #f8fafc; border: 1px solid #e2e8f0;
+        border-radius: 10px; padding: 16px; margin-bottom: 16px;
+    }
+    #quick-issue-result .key-row { display: flex; gap: 8px; }
+    #quick-issue-key {
+        flex: 1; font-family: monospace; font-size: 1rem; font-weight: 700; text-align: center;
+        background: #fff;
+    }
+    #quick-issue-copy { padding: 0 16px; border: none; border-radius: 8px; background: #10b981; color: #fff; font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -146,11 +184,43 @@
         <div class="table-scroll">
             <table id="applications-table">
                 <thead>
-                    <tr><th>신청일시</th><th>이름</th><th>연락방법</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th><th>삭제</th></tr>
+                    <tr><th>신청일시</th><th>이름</th><th>연락방법</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th><th>빠른발급</th><th>삭제</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
             <div class="empty-msg" id="applications-empty" style="display:none;">아직 신청 내역이 없습니다.</div>
+        </div>
+    </div>
+</div>
+
+<!-- 빠른 라이선스 발급 모달 -->
+<div class="modal-overlay" id="quick-issue-modal">
+    <div class="modal-box">
+        <h3>⚡ 빠른 라이선스 발급</h3>
+        <div class="modal-sub" id="quick-issue-target-name"></div>
+
+        <label>고객 MAC 주소 (내 PC 고유번호)</label>
+        <input type="text" id="quick-issue-mac" placeholder="예: AA-BB-CC-DD-EE-FF">
+
+        <label>이용 기간</label>
+        <select id="quick-issue-period">
+            <option value="30">1개월</option>
+            <option value="90">3개월</option>
+            <option value="180">6개월</option>
+            <option value="1">1일 (특수 발급용)</option>
+        </select>
+
+        <div id="quick-issue-result">
+            <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">발급된 라이선스 키 (복사해서 카카오톡으로 전달하세요)</div>
+            <div class="key-row">
+                <input type="text" id="quick-issue-key" readonly>
+                <button type="button" id="quick-issue-copy">복사</button>
+            </div>
+        </div>
+
+        <div class="modal-btn-row">
+            <button type="button" id="quick-issue-cancel">닫기</button>
+            <button type="button" id="quick-issue-generate">키 생성 및 저장</button>
         </div>
     </div>
 </div>
@@ -182,6 +252,32 @@ async function login(email, password) {
     const data = await res.json();
     accessToken = data.access_token;
     sessionStorage.setItem('ablog_admin_token', accessToken);
+}
+
+// security_manager.py의 generate_license_key()와 완전히 동일한 계산 방식 (같은 SALT 사용)
+const LICENSE_SECRET_SALT = "w8nXaZYF295KvKRqjVcVT7Bxj0y-btUeJI_Kq2Om50U";
+
+async function sha256Hex(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function generateLicenseKey(macRaw, days) {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + days);
+    const yy = String(expiryDate.getFullYear() % 100).padStart(2, '0');
+    const mm = String(expiryDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(expiryDate.getDate()).padStart(2, '0');
+    const expiryStr = yy + mm + dd;
+    const dataToHash = macRaw.trim().toUpperCase() + expiryStr + LICENSE_SECRET_SALT;
+    const fullHash = (await sha256Hex(dataToHash)).toUpperCase();
+    return {
+        key: `PREM-${expiryStr}-${fullHash.slice(0, 4)}-${fullHash.slice(4, 8)}`,
+        expiryStr,
+    };
 }
 
 function daysUntil(dateStr) {
@@ -232,6 +328,11 @@ async function loadApplications() {
             loadApplications();
         });
 
+        const issueBtn = document.createElement('button');
+        issueBtn.className = 'issue-btn';
+        issueBtn.textContent = '⚡ 발급';
+        issueBtn.addEventListener('click', () => openQuickIssue(row));
+
         tr.innerHTML = `
             <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</td>
             <td>${row.name}</td>
@@ -242,9 +343,11 @@ async function loadApplications() {
             <td>${row.question || '-'}</td>
             <td></td>
             <td></td>
+            <td></td>
         `;
         tr.children[7].appendChild(select);
-        tr.children[8].appendChild(deleteBtn);
+        tr.children[8].appendChild(issueBtn);
+        tr.children[9].appendChild(deleteBtn);
         tbody.appendChild(tr);
     });
 }
@@ -352,6 +455,80 @@ document.getElementById('license-form').addEventListener('submit', async (e) => 
     });
     e.target.reset();
     loadLicenses();
+});
+
+// --- 빠른 라이선스 발급 모달 ---
+let quickIssueTargetRow = null;
+const quickIssueModal = document.getElementById('quick-issue-modal');
+
+function openQuickIssue(row) {
+    quickIssueTargetRow = row;
+    document.getElementById('quick-issue-target-name').textContent = `${row.name} (${row.contact_type}: ${row.contact_value})`;
+    document.getElementById('quick-issue-mac').value = '';
+    document.getElementById('quick-issue-period').value = '30';
+    document.getElementById('quick-issue-result').style.display = 'none';
+    document.getElementById('quick-issue-key').value = '';
+    quickIssueModal.style.display = 'flex';
+}
+
+function closeQuickIssue() {
+    quickIssueModal.style.display = 'none';
+    quickIssueTargetRow = null;
+}
+
+document.getElementById('quick-issue-cancel').addEventListener('click', closeQuickIssue);
+quickIssueModal.addEventListener('click', (e) => {
+    if (e.target === quickIssueModal) closeQuickIssue();
+});
+
+document.getElementById('quick-issue-generate').addEventListener('click', async () => {
+    const row = quickIssueTargetRow;
+    if (!row) return;
+    const mac = document.getElementById('quick-issue-mac').value.trim();
+    if (!mac) { alert('MAC 주소를 입력해주세요.'); return; }
+    const days = parseInt(document.getElementById('quick-issue-period').value, 10);
+
+    const { key } = await generateLicenseKey(mac, days);
+    const issuedAt = new Date().toISOString().slice(0, 10);
+    const periodMonths = days === 1 ? 0 : Math.round(days / 30);
+
+    await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+            customer_name: row.name,
+            contact_value: row.contact_value,
+            mac_address: mac.toUpperCase(),
+            license_key: key,
+            period_months: periodMonths,
+            issued_at: issuedAt,
+            expires_at: addDays(issuedAt, days),
+        }),
+    });
+
+    // 결제완료 상태가 아니었으면 이 발급을 계기로 함께 갱신해둔다.
+    if (row.status !== '결제완료') {
+        await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+            method: 'PATCH',
+            headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ status: '결제완료' }),
+        });
+    }
+
+    document.getElementById('quick-issue-key').value = key;
+    document.getElementById('quick-issue-result').style.display = 'block';
+
+    loadApplications();
+    loadLicenses();
+});
+
+document.getElementById('quick-issue-copy').addEventListener('click', () => {
+    const keyInput = document.getElementById('quick-issue-key');
+    navigator.clipboard.writeText(keyInput.value).then(() => {
+        const btn = document.getElementById('quick-issue-copy');
+        btn.textContent = '복사됨!';
+        setTimeout(() => { btn.textContent = '복사'; }, 1500);
+    }).catch(() => {});
 });
 
 async function showDashboard() {
