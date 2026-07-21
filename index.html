@@ -560,9 +560,26 @@
             <div id="success-step" style="display: none; text-align: center; padding: 30px 10px;">
                 <div style="font-size: 70px; margin-bottom: 20px;">🎉</div>
                 <h2 style="font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 15px;">신청이 완료되었습니다!</h2>
-                <p style="color: #475569; font-size: 1.15rem; line-height: 1.6; margin-bottom: 35px;">
+                <p id="success-message" style="color: #475569; font-size: 1.15rem; line-height: 1.6; margin-bottom: 35px;">
                     감사합니다! 남겨주신 연락처로 <strong>30분 내에</strong><br>결제 방법과 설치 가이드를 안내해드릴게요.
                 </p>
+
+                <!-- 무료체험 신청은 결제 확인이 필요 없어서, 대기 없이 바로 여기서 다운로드+체험키를 안내한다 -->
+                <div id="trial-instant-box" style="display: none; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 15px; padding: 25px; margin-bottom: 25px; text-align: left;">
+                    <p style="font-weight: 700; color: #1e293b; margin-bottom: 15px; text-align: center;">✅ 바로 다운로드해서 시작하실 수 있어요</p>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 6px;">① 아래 버튼으로 프로그램 다운로드</div>
+                        <a id="trial-download-link" href="#" target="_blank" rel="noopener" class="btn-primary" style="display: block; text-align: center; padding: 14px; border-radius: 10px; text-decoration: none; font-weight: bold;">⬇️ 프로그램 다운로드</a>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 6px;">② 실행 후 "라이선스 키" 칸에 아래 코드를 입력 (3회까지 무료)</div>
+                        <div style="display: flex; gap: 8px;">
+                            <code id="trial-key-code" style="flex: 1; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 1.1rem; font-weight: bold; text-align: center; letter-spacing: 1px;">TRIAL-3RUNS</code>
+                            <button type="button" id="trial-key-copy-btn" style="padding: 0 18px; border: none; border-radius: 8px; background: #6366f1; color: white; font-weight: bold; cursor: pointer;">복사</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="background: #f8fafc; border-radius: 15px; padding: 30px; margin-bottom: 30px;">
                     <p style="color: #64748b; font-size: 1.05rem; margin-bottom: 20px;">급하신 경우 카카오톡 채널로 문의 주시면<br>더 빠르게 도와드립니다.</p>
                     <a href="https://open.kakao.com/o/sDFwdqEi" target="_blank" rel="noopener" class="btn-kakao" style="display: inline-block; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: bold;">💬 카카오톡 바로가기</a>
@@ -651,6 +668,17 @@
 
             if(closeBtn) closeBtn.addEventListener('click', closeModal);
             if(closeSuccessBtn) closeSuccessBtn.addEventListener('click', closeModal);
+
+            const trialKeyCopyBtn = document.getElementById('trial-key-copy-btn');
+            if (trialKeyCopyBtn) {
+                trialKeyCopyBtn.addEventListener('click', () => {
+                    const keyText = document.getElementById('trial-key-code').textContent.trim();
+                    navigator.clipboard.writeText(keyText).then(() => {
+                        trialKeyCopyBtn.textContent = '복사됨!';
+                        setTimeout(() => { trialKeyCopyBtn.textContent = '복사'; }, 1500);
+                    }).catch(() => {});
+                });
+            }
             
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) closeModal();
@@ -694,6 +722,24 @@
                     });
 
                     if (!res.ok) throw new Error('submit failed');
+
+                    // 무료체험(이용권을 선택하지 않고 들어온 경우)은 결제 확인이 필요 없으므로,
+                    // 30분 대기 없이 이 자리에서 바로 다운로드 링크 + 체험키를 보여준다.
+                    const isTrial = !selectedPlan;
+                    const successMessage = document.getElementById('success-message');
+                    const trialBox = document.getElementById('trial-instant-box');
+                    if (isTrial) {
+                        successMessage.innerHTML = '무료체험 신청이 완료되었습니다!<br>아래에서 바로 다운로드해 시작하실 수 있어요.';
+                        trialBox.style.display = 'block';
+                        fetch('version.json').then(r => r.json()).then(data => {
+                            if (data.download_url) {
+                                document.getElementById('trial-download-link').href = data.download_url;
+                            }
+                        }).catch(() => {});
+                    } else {
+                        successMessage.innerHTML = '감사합니다! 남겨주신 연락처로 <strong>30분 내에</strong><br>결제 방법과 설치 가이드를 안내해드릴게요.';
+                        trialBox.style.display = 'none';
+                    }
 
                     // UI 전환 애니메이션
                     formStep.style.opacity = '0';
