@@ -180,6 +180,19 @@
     </div>
 
     <div class="section">
+        <h2>🧪 무료체험 사용 현황</h2>
+        <div class="table-scroll">
+            <table id="trial-usage-table">
+                <thead>
+                    <tr><th>고객명</th><th>MAC</th><th>사용 횟수</th><th>최초 사용</th><th>최근 사용</th><th>상태</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="empty-msg" id="trial-usage-empty" style="display:none;">아직 무료체험 사용 기록이 없습니다.</div>
+        </div>
+    </div>
+
+    <div class="section">
         <h2>📝 신청 내역</h2>
         <div class="table-scroll">
             <table id="applications-table">
@@ -412,6 +425,41 @@ async function loadLicenses() {
     document.getElementById('expiring-empty').style.display = expiringCount ? 'none' : 'block';
 }
 
+async function loadTrialUsage() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/trial_usage?select=*&order=last_used_at.desc`, { headers: authHeaders() });
+    const rows = await res.json();
+
+    // 체험판 라이선스 발급 기록(있는 경우)에서 MAC -> 고객명을 대조해서 같이 보여준다.
+    const licRes = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=mac_address,customer_name&period_months=eq.-1`, { headers: authHeaders() });
+    const licRows = await licRes.json();
+    const nameByMac = {};
+    licRows.forEach(r => { if (r.mac_address) nameByMac[r.mac_address.toUpperCase()] = r.customer_name; });
+
+    const tbody = document.querySelector('#trial-usage-table tbody');
+    tbody.innerHTML = '';
+    document.getElementById('trial-usage-empty').style.display = rows.length ? 'none' : 'block';
+
+    rows.forEach(row => {
+        const mac = (row.mac_address || '').toUpperCase();
+        const name = nameByMac[mac] || '미확인';
+        const done = row.runs_used >= 3;
+        const badge = done
+            ? '<span class="badge badge-expired">3회 소진</span>'
+            : `<span class="badge badge-ok">진행중 (${row.runs_used}/3)</span>`;
+        const tr = document.createElement('tr');
+        tr.className = done ? 'expired' : '';
+        tr.innerHTML = `
+            <td>${name}</td>
+            <td>${mac}</td>
+            <td>${row.runs_used} / 3</td>
+            <td>${new Date(row.first_used_at).toLocaleString('ko-KR')}</td>
+            <td>${new Date(row.last_used_at).toLocaleString('ko-KR')}</td>
+            <td>${badge}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
 function addMonths(dateStr, months) {
     const d = new Date(dateStr);
     d.setMonth(d.getMonth() + months);
@@ -538,7 +586,7 @@ document.getElementById('quick-issue-copy').addEventListener('click', () => {
 async function showDashboard() {
     loginScreen.style.display = 'none';
     dashboard.style.display = 'block';
-    await Promise.all([loadApplications(), loadLicenses()]);
+    await Promise.all([loadApplications(), loadLicenses(), loadTrialUsage()]);
 }
 
 document.getElementById('login-btn').addEventListener('click', async () => {

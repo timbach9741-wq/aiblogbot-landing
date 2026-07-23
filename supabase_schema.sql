@@ -75,3 +75,41 @@ create policy "admin_only_delete_licenses"
   on licenses for delete
   to authenticated
   using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
+
+-- 7. 무료체험 사용 현황 테이블 (관리자 페이지에서 "몇 명이 몇 회 썼는지" 확인용)
+--    MAC 주소 1개당 1행. 앱이 체험 1회를 실제로 소진할 때마다 report_trial_usage()를
+--    호출해서 runs_used를 1씩 올린다.
+create table trial_usage (
+  id uuid primary key default gen_random_uuid(),
+  mac_address text not null unique,
+  runs_used integer not null default 0,
+  first_used_at timestamptz not null default now(),
+  last_used_at timestamptz not null default now()
+);
+
+alter table trial_usage enable row level security;
+
+-- 8. 앱(anon)이 테이블에 직접 쓰지 못하게 막고, 아래 RPC 함수를 통해서만 기록하게 한다.
+--    SECURITY DEFINER로 RLS를 우회해 upsert(없으면 생성/있으면 +1)를 안전하게 수행한다.
+--    앱이 할 수 있는 건 "이 MAC 사용횟수 1 늘리기" 뿐이고, 조회/삭제는 여전히 불가능하다.
+create or replace function report_trial_usage(p_mac text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into trial_usage (mac_address, runs_used, first_used_at, last_used_at)
+  values (p_mac, 1, now(), now())
+  on conflict (mac_address)
+  do update set runs_used = trial_usage.runs_used + 1, last_used_at = now();
+end;
+$$;
+
+grant execute on function report_trial_usage(text) to anon;
+
+-- 9. 조회는 다른 테이블들과 동일하게 딱 대표님 계정만 가능
+create policy "admin_only_read_trial_usage"
+  on trial_usage for select
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
