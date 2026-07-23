@@ -66,6 +66,13 @@
 
     .table-scroll { overflow-x: auto; }
 
+    .filter-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+    .filter-tab {
+        padding: 7px 16px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff;
+        color: #4b5563; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    }
+    .filter-tab.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+
     /* 라이선스 추가 폼 */
     #license-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px; }
     #license-form input, #license-form select {
@@ -194,6 +201,11 @@
 
     <div class="section">
         <h2>📝 신청 내역</h2>
+        <div class="filter-tabs" id="applications-filter-tabs">
+            <button type="button" class="filter-tab active" data-filter="all">전체</button>
+            <button type="button" class="filter-tab" data-filter="trial">무료체험</button>
+            <button type="button" class="filter-tab" data-filter="paid">유료문의</button>
+        </div>
         <div class="table-scroll">
             <table id="applications-table">
                 <thead>
@@ -303,9 +315,28 @@ function daysUntil(dateStr) {
     return Math.round((target - today) / (1000 * 60 * 60 * 24));
 }
 
+// payment_method는 신청 폼에서 유료 플랜 버튼으로 들어왔으면 "계좌이체 - 1개월 89,000원"처럼
+// 플랜명이 붙고, 무료체험(플랜 미선택)으로 들어왔으면 그냥 "계좌이체" 하나만 저장된다.
+function isTrialApplication(row) {
+    return row.payment_method === '계좌이체';
+}
+
+let allApplications = [];
+let applicationsFilter = 'all';
+
 async function loadApplications() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?select=*&order=created_at.desc`, { headers: authHeaders() });
-    const rows = await res.json();
+    allApplications = await res.json();
+    renderApplicationsTable();
+}
+
+function renderApplicationsTable() {
+    const rows = allApplications.filter(row => {
+        if (applicationsFilter === 'trial') return isTrialApplication(row);
+        if (applicationsFilter === 'paid') return !isTrialApplication(row);
+        return true;
+    });
+
     const tbody = document.querySelector('#applications-table tbody');
     tbody.innerHTML = '';
     document.getElementById('applications-empty').style.display = rows.length ? 'none' : 'block';
@@ -366,6 +397,15 @@ async function loadApplications() {
         tbody.appendChild(tr);
     });
 }
+
+document.querySelectorAll('#applications-filter-tabs .filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#applications-filter-tabs .filter-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applicationsFilter = btn.dataset.filter;
+        renderApplicationsTable();
+    });
+});
 
 async function loadLicenses() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=*&order=expires_at.asc.nullslast`, { headers: authHeaders() });
