@@ -160,6 +160,12 @@
         <form id="license-form">
             <input type="text" id="lic-name" placeholder="고객명 / 상호명" required>
             <input type="text" id="lic-contact" placeholder="연락처 (카카오톡ID 등)">
+            <select id="lic-channel">
+                <option value="크몽">크몽</option>
+                <option value="홈페이지">홈페이지</option>
+                <option value="숨고">숨고</option>
+                <option value="기타">기타</option>
+            </select>
             <input type="text" id="lic-mac" placeholder="MAC 주소 (체험판은 선택)">
             <input type="text" id="lic-key" placeholder="발급된 라이선스 키" required>
             <select id="lic-period">
@@ -178,7 +184,7 @@
         <div class="table-scroll">
             <table id="license-table">
                 <thead>
-                    <tr><th>고객명</th><th>연락처</th><th>MAC</th><th>키</th><th>기간</th><th>발급일</th><th>만료일</th><th>상태</th></tr>
+                    <tr><th>고객명</th><th>연락처</th><th>채널</th><th>MAC</th><th>키</th><th>기간</th><th>발급일</th><th>만료일</th><th>상태</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -438,6 +444,7 @@ async function loadLicenses() {
         tr.innerHTML = `
             <td>${row.customer_name}</td>
             <td>${row.contact_value || '-'}</td>
+            <td>${row.channel || '홈페이지'}</td>
             <td>${row.mac_address}</td>
             <td style="font-family:monospace; font-size:0.8rem;">${row.license_key}</td>
             <td>${row.period_months === -1 ? '체험(3회)' : (row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구'))}</td>
@@ -532,6 +539,7 @@ document.getElementById('license-form').addEventListener('submit', async (e) => 
     const payload = {
         customer_name: document.getElementById('lic-name').value.trim(),
         contact_value: document.getElementById('lic-contact').value.trim(),
+        channel: document.getElementById('lic-channel').value,
         mac_address: document.getElementById('lic-mac').value.trim(),
         license_key: document.getElementById('lic-key').value.trim() || 'TRIAL-3RUNS',
         period_months: isTrial ? -1 : parseInt(period, 10),
@@ -590,6 +598,7 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
         body: JSON.stringify({
             customer_name: row.name,
             contact_value: row.contact_value,
+            channel: '홈페이지',
             mac_address: mac.toUpperCase(),
             license_key: key,
             period_months: periodMonths,

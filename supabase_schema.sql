@@ -113,3 +113,7 @@ create policy "admin_only_read_trial_usage"
   on trial_usage for select
   to authenticated
   using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
+
+-- 10. 판매 채널 구분 (2026-07-31: 크몽 등 외부 채널 판매를 관리자 페이지에서
+--     수동 기록할 때, 홈페이지 신청 건과 구분하기 위해 추가)
+alter table licenses add column if not exists channel text not null default '홈페이지';
