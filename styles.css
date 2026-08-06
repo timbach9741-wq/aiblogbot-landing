@@ -68,6 +68,28 @@ body {
     transform: scale(1.08);
 }
 
+.floating-kakao-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #FEE500;
+    color: #3C1E1E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+    text-decoration: none;
+    box-shadow: 0 10px 25px -8px rgba(60, 30, 30, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.floating-kakao-btn:hover {
+    transform: scale(1.08);
+}
+
 .scroll-top-btn {
     width: 44px;
     height: 44px;
@@ -91,7 +113,7 @@ body {
         right: 16px;
         bottom: 20px;
     }
-    .floating-cta-btn {
+    .floating-cta-btn, .floating-kakao-btn {
         width: 56px;
         height: 56px;
         font-size: 11px;
