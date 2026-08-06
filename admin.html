@@ -555,30 +555,40 @@ document.getElementById('license-form').addEventListener('keydown', (e) => {
 
 document.getElementById('license-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    // 버튼 클릭 시점에도 마지막 한글 글자가 아주 근소하게 늦게 확정되는
-    // 경우가 있어, 한 프레임 대기했다가 입력값을 읽어 잘림을 방지한다.
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    const period = document.getElementById('lic-period').value;
-    const isOneDay = period === '0';
-    const isTrial = period === 'trial';
-    const issuedAt = new Date().toISOString().slice(0, 10);
-    const payload = {
-        customer_name: document.getElementById('lic-name').value.trim(),
-        contact_value: document.getElementById('lic-contact').value.trim(),
-        channel: document.getElementById('lic-channel').value,
-        mac_address: document.getElementById('lic-mac').value.trim(),
-        license_key: document.getElementById('lic-key').value.trim() || 'TRIAL-3RUNS',
-        period_months: isTrial ? -1 : parseInt(period, 10),
-        issued_at: issuedAt,
-        expires_at: isTrial ? null : (isOneDay ? addDays(issuedAt, 1) : addMonths(issuedAt, parseInt(period, 10))),
-    };
-    await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
-        method: 'POST',
-        headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-        body: JSON.stringify(payload),
-    });
-    e.target.reset();
-    loadLicenses();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.disabled) return; // 응답 대기 중 중복 제출 방지
+    submitBtn.disabled = true;
+    const originalLabel = submitBtn.textContent;
+    submitBtn.textContent = '저장 중...';
+    try {
+        // 버튼 클릭 시점에도 마지막 한글 글자가 아주 근소하게 늦게 확정되는
+        // 경우가 있어, 한 프레임 대기했다가 입력값을 읽어 잘림을 방지한다.
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        const period = document.getElementById('lic-period').value;
+        const isOneDay = period === '0';
+        const isTrial = period === 'trial';
+        const issuedAt = new Date().toISOString().slice(0, 10);
+        const payload = {
+            customer_name: document.getElementById('lic-name').value.trim(),
+            contact_value: document.getElementById('lic-contact').value.trim(),
+            channel: document.getElementById('lic-channel').value,
+            mac_address: document.getElementById('lic-mac').value.trim(),
+            license_key: document.getElementById('lic-key').value.trim() || 'TRIAL-3RUNS',
+            period_months: isTrial ? -1 : parseInt(period, 10),
+            issued_at: issuedAt,
+            expires_at: isTrial ? null : (isOneDay ? addDays(issuedAt, 1) : addMonths(issuedAt, parseInt(period, 10))),
+        };
+        await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+            body: JSON.stringify(payload),
+        });
+        e.target.reset();
+        loadLicenses();
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalLabel;
+    }
 });
 
 // --- 빠른 라이선스 발급 모달 ---
@@ -608,45 +618,56 @@ quickIssueModal.addEventListener('click', (e) => {
 });
 
 document.getElementById('quick-issue-generate').addEventListener('click', async () => {
+    const genBtn = document.getElementById('quick-issue-generate');
+    if (genBtn.disabled) return; // 응답 대기 중 중복 클릭 방지 (모바일에서 반응이 늦어 여러 번 눌러도 중복 저장되지 않도록)
     const row = quickIssueTargetRow;
     if (!row) return;
     const mac = document.getElementById('quick-issue-mac').value.trim();
     if (!mac) { alert('MAC 주소를 입력해주세요.'); return; }
     const days = parseInt(document.getElementById('quick-issue-period').value, 10);
 
-    const { key } = await generateLicenseKey(mac, days);
-    const issuedAt = new Date().toISOString().slice(0, 10);
-    const periodMonths = days === 1 ? 0 : Math.round(days / 30);
+    genBtn.disabled = true;
+    const originalLabel = genBtn.textContent;
+    genBtn.textContent = '저장 중...';
 
-    await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
-        method: 'POST',
-        headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-        body: JSON.stringify({
-            customer_name: row.name,
-            contact_value: row.contact_value,
-            channel: '홈페이지',
-            mac_address: mac.toUpperCase(),
-            license_key: key,
-            period_months: periodMonths,
-            issued_at: issuedAt,
-            expires_at: addDays(issuedAt, days),
-        }),
-    });
+    try {
+        const { key } = await generateLicenseKey(mac, days);
+        const issuedAt = new Date().toISOString().slice(0, 10);
+        const periodMonths = days === 1 ? 0 : Math.round(days / 30);
 
-    // 결제완료 상태가 아니었으면 이 발급을 계기로 함께 갱신해둔다.
-    if (row.status !== '결제완료') {
-        await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
-            method: 'PATCH',
+        await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
+            method: 'POST',
             headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ status: '결제완료' }),
+            body: JSON.stringify({
+                customer_name: row.name,
+                contact_value: row.contact_value,
+                channel: '홈페이지',
+                mac_address: mac.toUpperCase(),
+                license_key: key,
+                period_months: periodMonths,
+                issued_at: issuedAt,
+                expires_at: addDays(issuedAt, days),
+            }),
         });
+
+        // 결제완료 상태가 아니었으면 이 발급을 계기로 함께 갱신해둔다.
+        if (row.status !== '결제완료') {
+            await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+                method: 'PATCH',
+                headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ status: '결제완료' }),
+            });
+        }
+
+        document.getElementById('quick-issue-key').value = key;
+        document.getElementById('quick-issue-result').style.display = 'block';
+
+        loadApplications();
+        loadLicenses();
+    } finally {
+        genBtn.disabled = false;
+        genBtn.textContent = originalLabel;
     }
-
-    document.getElementById('quick-issue-key').value = key;
-    document.getElementById('quick-issue-result').style.display = 'block';
-
-    loadApplications();
-    loadLicenses();
 });
 
 document.getElementById('quick-issue-copy').addEventListener('click', () => {
