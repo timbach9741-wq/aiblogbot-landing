@@ -163,6 +163,21 @@ body {
     color: var(--text-dark);
 }
 
+.nav-kakao-badge {
+    background: #FEE500 !important;
+    color: #3C1E1E !important;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700 !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-kakao-badge:hover {
+    color: #3C1E1E !important;
+    transform: scale(1.05);
+    box-shadow: 0 6px 14px -4px rgba(60, 30, 30, 0.4);
+}
+
 .btn-trial {
     background: var(--primary-grad);
     color: white;
