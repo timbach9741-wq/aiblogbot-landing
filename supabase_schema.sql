@@ -117,3 +117,42 @@ create policy "admin_only_read_trial_usage"
 -- 10. 판매 채널 구분 (2026-07-31: 크몽 등 외부 채널 판매를 관리자 페이지에서
 --     수동 기록할 때, 홈페이지 신청 건과 구분하기 위해 추가)
 alter table licenses add column if not exists channel text not null default '홈페이지';
+
+-- 11. 오류 로그 테이블 (2026-08-08: 고객마다 "안 돼요" 스크린샷을 매번 받지 않고도
+--     원격으로 어떤 고객이 어느 단계에서 무슨 오류를 겪었는지 확인하기 위해 추가.
+--     trial_usage/report_trial_usage와 동일한 구조 — 앱(anon)은 RPC로 기록만 가능,
+--     조회는 관리자 계정만 가능.
+create table error_logs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  mac_address text not null,
+  app_version text,
+  context text,
+  error_message text
+);
+
+alter table error_logs enable row level security;
+
+create or replace function report_error_log(p_mac text, p_version text, p_context text, p_message text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into error_logs (mac_address, app_version, context, error_message)
+  values (p_mac, p_version, p_context, p_message);
+end;
+$$;
+
+grant execute on function report_error_log(text, text, text, text) to anon;
+
+create policy "admin_only_read_error_logs"
+  on error_logs for select
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
+
+create policy "admin_only_delete_error_logs"
+  on error_logs for delete
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
