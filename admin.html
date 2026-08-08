@@ -211,7 +211,7 @@
         <div class="table-scroll">
             <table id="error-logs-table">
                 <thead>
-                    <tr><th>발생시각</th><th>고객명</th><th>MAC</th><th>버전</th><th>단계</th><th>오류 내용</th></tr>
+                    <tr><th>발생시각</th><th>고객명</th><th>MAC</th><th>버전</th><th>단계</th><th>오류 내용</th><th>삭제</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -559,7 +559,20 @@ async function loadErrorLogs() {
             <td>${row.app_version || '-'}</td>
             <td>${row.context || '-'}</td>
             <td style="max-width:400px; white-space:pre-wrap; word-break:break-all;">${row.error_message || '-'}</td>
+            <td></td>
         `;
+        const errDeleteBtn = document.createElement('button');
+        errDeleteBtn.className = 'delete-btn';
+        errDeleteBtn.textContent = '삭제';
+        errDeleteBtn.addEventListener('click', async () => {
+            if (!confirm('이 오류 로그를 삭제할까요? 되돌릴 수 없습니다.')) return;
+            await fetch(`${SUPABASE_URL}/rest/v1/error_logs?id=eq.${row.id}`, {
+                method: 'DELETE',
+                headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+            });
+            loadErrorLogs();
+        });
+        tr.lastElementChild.appendChild(errDeleteBtn);
         tbody.appendChild(tr);
     });
 }
