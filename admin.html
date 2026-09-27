@@ -315,30 +315,23 @@ async function login(email, password) {
     sessionStorage.setItem('ablog_admin_token', accessToken);
 }
 
-// security_manager.py의 generate_license_key()와 완전히 동일한 계산 방식 (같은 SALT 사용)
-const LICENSE_SECRET_SALT = "w8nXaZYF295KvKRqjVcVT7Bxj0y-btUeJI_Kq2Om50U";
-
-async function sha256Hex(text) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
+// [2026-09-27] 정식 키는 서버(Edge Function "license")가 비공개 키로 서명해서 발급한다.
+// 예전처럼 이 페이지에서 SALT로 직접 계산하면 소스를 본 누구나 키를 만들 수 있었다.
+// 관리자 로그인 토큰이 있어야만 발급된다.
 async function generateLicenseKey(macRaw, days) {
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + days);
-    const yy = String(expiryDate.getFullYear() % 100).padStart(2, '0');
-    const mm = String(expiryDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(expiryDate.getDate()).padStart(2, '0');
-    const expiryStr = yy + mm + dd;
-    const dataToHash = macRaw.trim().toUpperCase() + expiryStr + LICENSE_SECRET_SALT;
-    const fullHash = (await sha256Hex(dataToHash)).toUpperCase();
-    return {
-        key: `PREM-${expiryStr}-${fullHash.slice(0, 4)}-${fullHash.slice(4, 8)}`,
-        expiryStr,
-    };
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/license`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ action: 'issue', mac: macRaw.trim().toUpperCase(), days }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+        const reason = data.error === 'forbidden' ? '로그인이 만료됐어요. 다시 로그인해주세요.'
+                     : data.error === 'bad_mac' ? 'MAC 주소 형식이 올바르지 않아요. (예: AA-BB-CC-DD-EE-FF)'
+                     : '키 발급 서버 오류입니다. 잠시 후 다시 시도해주세요.';
+        throw new Error(reason);
+    }
+    return { key: data.key, expiryStr: data.expiry };
 }
 
 // 활성화 코드: ACT-XXXX-XXXX (헷갈리는 0/O/1/I 제외). 앱의 ACTIVATION_CODE_PATTERN과 같은 규칙.
@@ -807,6 +800,8 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
 
         loadApplications();
         loadLicenses();
+    } catch (err) {
+        alert(err.message || '발급 중 오류가 발생했습니다.');
     } finally {
         genBtn.disabled = false;
         genBtn.textContent = originalLabel;

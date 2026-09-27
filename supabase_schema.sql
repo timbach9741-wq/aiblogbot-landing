@@ -235,3 +235,33 @@ end;
 $$;
 
 grant execute on function activate_code(text, text) to anon;
+
+-- 13. (2026-09-27) 서버 서명 키 전환. activate_code는 이제 Edge Function "license"가
+--     서비스 키로만 호출한다 (앱이 직접 부르면 만료일만 받아 예전 SALT 방식 키를 만들 수
+--     있었으므로 anon 권한 회수). 예전 방식(PREM-) 키는 발급 기록이 있는 것만 인정하는데,
+--     앱에 내장된 목록 이후에 기록된 키를 확인하기 위한 조회 함수 추가.
+revoke execute on function activate_code(text, text) from anon, authenticated, public;
+
+create or replace function is_registered_key(p_key text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from licenses where upper(trim(license_key)) = upper(trim(p_key)))
+$$;
+
+grant execute on function is_registered_key(text) to anon;
+
+-- 14. 서명 키 보관 표. Edge Function "license"가 처음 실행될 때 키를 스스로 만들어 저장한다.
+--     RLS만 켜고 정책을 하나도 안 만들어서 anon/관리자 로그인으로도 읽을 수 없고,
+--     서비스 키(Edge Function 안에서만 쓰임)로만 접근 가능.
+create table if not exists license_signing_keys (
+  id integer primary key check (id = 1),
+  private_pkcs8 text not null,
+  public_raw text not null,
+  created_at timestamptz default now()
+);
+alter table license_signing_keys enable row level security;
+revoke all on license_signing_keys from anon, authenticated;
