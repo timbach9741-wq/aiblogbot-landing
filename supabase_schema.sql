@@ -171,3 +171,67 @@ create policy "admin_only_delete_error_logs"
   on error_logs for delete
   to authenticated
   using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
+
+-- 12. 활성화 코드 (2026-09-27: 결제 고객에게 PC 고유번호를 따로 받지 않고
+--     "ACT-XXXX-XXXX" 코드 하나만 보내면, 고객 앱이 처음 등록한 PC에 자동으로 묶는다.
+--     이용 기간은 고객이 코드를 등록한 날부터 계산. 같은 PC 재설치 시 같은 만료일로
+--     재등록 가능, 다른 PC에서는 거부. 등록되는 순간 licenses 이력에도 자동 기록.)
+create table if not exists activation_codes (
+  code text primary key,
+  period_days integer not null,
+  customer_name text,
+  contact_value text,
+  channel text default '홈페이지',
+  application_id uuid,
+  created_at timestamptz default now(),
+  mac_address text,
+  activated_at timestamptz,
+  expires_on date
+);
+
+alter table activation_codes enable row level security;
+
+create policy "admin_all_activation_codes"
+  on activation_codes for all
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE')
+  with check (auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL_HERE');
+
+-- 앱(anon)은 코드 등록 RPC만 호출 가능. 결과로 만료일(YYMMDD)만 받아서 앱이 기존
+-- PREM 키를 스스로 만들어 저장한다 (그 뒤로는 기존처럼 오프라인 검증).
+create or replace function activate_code(p_code text, p_mac text)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r activation_codes;
+  v_exp date;
+begin
+  select * into r from activation_codes where code = upper(trim(p_code)) for update;
+  if not found then
+    return json_build_object('ok', false, 'error', 'not_found');
+  end if;
+  if r.mac_address is not null and r.mac_address <> upper(trim(p_mac)) then
+    return json_build_object('ok', false, 'error', 'used_elsewhere');
+  end if;
+  if r.mac_address is null then
+    v_exp := (now() at time zone 'Asia/Seoul')::date + r.period_days;
+    update activation_codes
+      set mac_address = upper(trim(p_mac)), activated_at = now(), expires_on = v_exp
+      where code = r.code;
+    insert into licenses (customer_name, contact_value, channel, mac_address, license_key,
+                          period_months, issued_at, expires_at)
+    values (coalesce(r.customer_name, '활성화코드'), r.contact_value, coalesce(r.channel, '홈페이지'),
+            upper(trim(p_mac)), r.code,
+            case when r.period_days <= 1 then 0 else round(r.period_days / 30.0) end,
+            (now() at time zone 'Asia/Seoul')::date, v_exp);
+  else
+    v_exp := r.expires_on;
+  end if;
+  return json_build_object('ok', true, 'expiry', to_char(v_exp, 'YYMMDD'));
+end;
+$$;
+
+grant execute on function activate_code(text, text) to anon;

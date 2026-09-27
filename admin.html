@@ -193,6 +193,20 @@
     </div>
 
     <div class="section">
+        <h2>🔑 활성화 코드</h2>
+        <p style="color:#6b7280; font-size:14px; margin-top:-8px;">신청 내역의 "빠른발급"에서 MAC을 비워두면 코드가 발급됩니다. 고객이 프로그램에 붙여넣는 순간 그 PC에 묶이고, 위 라이선스 이력에도 자동 기록돼요. 이용 기간은 등록한 날부터 계산됩니다.</p>
+        <div class="table-scroll">
+            <table id="activation-codes-table">
+                <thead>
+                    <tr><th>발급일시</th><th>고객명</th><th>코드</th><th>기간</th><th>상태</th><th>등록된 MAC</th><th>만료일</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="empty-msg" id="activation-codes-empty" style="display:none;">아직 발급한 활성화 코드가 없습니다.</div>
+        </div>
+    </div>
+
+    <div class="section">
         <h2>🧪 무료체험 사용 현황</h2>
         <div class="table-scroll">
             <table id="trial-usage-table">
@@ -244,8 +258,8 @@
         <h3>⚡ 빠른 라이선스 발급</h3>
         <div class="modal-sub" id="quick-issue-target-name"></div>
 
-        <label>고객 MAC 주소 (내 PC 고유번호)</label>
-        <input type="text" id="quick-issue-mac" placeholder="예: AA-BB-CC-DD-EE-FF">
+        <label>고객 MAC 주소 (내 PC 고유번호) — <b>비워두면 활성화 코드 발급</b></label>
+        <input type="text" id="quick-issue-mac" placeholder="모르면 비워두세요 → ACT-XXXX-XXXX 코드 발급">
 
         <label>이용 기간</label>
         <select id="quick-issue-period">
@@ -256,7 +270,7 @@
         </select>
 
         <div id="quick-issue-result">
-            <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">발급된 라이선스 키 (복사해서 카카오톡으로 전달하세요)</div>
+            <div id="quick-issue-result-label" style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">발급된 라이선스 키 (복사해서 카카오톡으로 전달하세요)</div>
             <div class="key-row" style="margin-bottom: 14px;">
                 <input type="text" id="quick-issue-key" readonly>
                 <button type="button" id="quick-issue-copy">복사</button>
@@ -325,6 +339,38 @@ async function generateLicenseKey(macRaw, days) {
         key: `PREM-${expiryStr}-${fullHash.slice(0, 4)}-${fullHash.slice(4, 8)}`,
         expiryStr,
     };
+}
+
+// 활성화 코드: ACT-XXXX-XXXX (헷갈리는 0/O/1/I 제외). 앱의 ACTIVATION_CODE_PATTERN과 같은 규칙.
+function generateActivationCode() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = new Uint8Array(8);
+    crypto.getRandomValues(bytes);
+    const chars = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    return `ACT-${chars.slice(0, 4)}-${chars.slice(4)}`;
+}
+
+async function loadActivationCodes() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_codes?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
+    const rows = res.ok ? await res.json() : [];
+    const tbody = document.querySelector('#activation-codes-table tbody');
+    tbody.innerHTML = '';
+    document.getElementById('activation-codes-empty').style.display = rows.length ? 'none' : 'block';
+    rows.forEach(row => {
+        const used = !!row.mac_address;
+        const periodLabel = row.period_days <= 1 ? '1일' : `${Math.round(row.period_days / 30)}개월`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${new Date(row.created_at).toLocaleString('ko-KR')}</td>
+            <td>${row.customer_name || '-'}</td>
+            <td style="font-family:monospace;">${row.code}</td>
+            <td>${periodLabel}</td>
+            <td>${used ? '<span class="badge badge-ok">등록됨</span>' : '<span class="badge">미등록</span>'}</td>
+            <td>${row.mac_address || '-'}</td>
+            <td>${row.expires_on || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function daysUntil(dateStr) {
@@ -655,7 +701,9 @@ const quickIssueModal = document.getElementById('quick-issue-modal');
 function openQuickIssue(row) {
     quickIssueTargetRow = row;
     document.getElementById('quick-issue-target-name').textContent = `${row.name} (${row.contact_type}: ${row.contact_value})`;
-    document.getElementById('quick-issue-mac').value = '';
+    // 프로그램의 "이용권 구매" 버튼으로 들어온 신청은 문의란에 PC 고유번호가 자동으로 붙어 있다
+    const autoMac = /\[PC 고유번호\(자동\): ([0-9A-F:-]+)\]/i.exec(row.question || '');
+    document.getElementById('quick-issue-mac').value = autoMac ? autoMac[1].toUpperCase() : '';
     document.getElementById('quick-issue-period').value = '30';
     document.getElementById('quick-issue-result').style.display = 'none';
     document.getElementById('quick-issue-key').value = '';
@@ -680,7 +728,6 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
     const row = quickIssueTargetRow;
     if (!row) return;
     const mac = document.getElementById('quick-issue-mac').value.trim();
-    if (!mac) { alert('MAC 주소를 입력해주세요.'); return; }
     const days = parseInt(document.getElementById('quick-issue-period').value, 10);
 
     genBtn.disabled = true;
@@ -688,6 +735,44 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
     genBtn.textContent = '저장 중...';
 
     try {
+        if (!mac) {
+            // MAC을 모르면 활성화 코드를 발급한다. 고객이 앱에 붙여넣는 순간 그 PC에 묶이고,
+            // 그때 licenses 이력에도 자동으로 기록된다 (DB의 activate_code 함수).
+            let code = null;
+            for (let attempt = 0; attempt < 3 && !code; attempt++) {
+                const candidate = generateActivationCode();
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_codes`, {
+                    method: 'POST',
+                    headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                    body: JSON.stringify({
+                        code: candidate,
+                        period_days: days,
+                        customer_name: row.name,
+                        contact_value: row.contact_value,
+                        channel: '홈페이지',
+                        application_id: row.id,
+                    }),
+                });
+                if (res.ok) code = candidate;
+                else if (res.status !== 409) { alert('코드 저장에 실패했습니다. 다시 로그인 후 시도해주세요.'); return; }
+            }
+            if (!code) { alert('코드 생성에 실패했습니다. 다시 시도해주세요.'); return; }
+            if (row.status !== '결제완료') {
+                await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+                    method: 'PATCH',
+                    headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                    body: JSON.stringify({ status: '결제완료' }),
+                });
+            }
+            document.getElementById('quick-issue-result-label').textContent =
+                '활성화 코드 (고객이 프로그램 라이선스 칸에 붙여넣으면 자동 등록돼요)';
+            document.getElementById('quick-issue-key').value = code;
+            document.getElementById('quick-issue-result').style.display = 'block';
+            loadApplications();
+            loadActivationCodes();
+            return;
+        }
+
         const { key } = await generateLicenseKey(mac, days);
         const issuedAt = new Date().toISOString().slice(0, 10);
         const periodMonths = days === 1 ? 0 : Math.round(days / 30);
@@ -716,6 +801,7 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
             });
         }
 
+        document.getElementById('quick-issue-result-label').textContent = '발급된 라이선스 키 (복사해서 카카오톡으로 전달하세요)';
         document.getElementById('quick-issue-key').value = key;
         document.getElementById('quick-issue-result').style.display = 'block';
 
@@ -739,7 +825,7 @@ document.getElementById('quick-issue-copy').addEventListener('click', () => {
 async function showDashboard() {
     loginScreen.style.display = 'none';
     dashboard.style.display = 'block';
-    await Promise.all([loadApplications(), loadLicenses(), loadTrialUsage(), loadErrorLogs()]);
+    await Promise.all([loadApplications(), loadLicenses(), loadTrialUsage(), loadErrorLogs(), loadActivationCodes()]);
 }
 
 document.getElementById('login-btn').addEventListener('click', async () => {
