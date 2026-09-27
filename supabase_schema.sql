@@ -108,6 +108,21 @@ $$;
 
 grant execute on function report_trial_usage(text) to anon;
 
+-- 8-1. (2026-09-27) 앱이 "이 PC가 체험을 몇 번 썼는지"만 조회할 수 있게 한다.
+--      로컬 숨김 파일을 지워 체험을 리셋하는 걸 막기 위함. 알고 있는 MAC 하나의
+--      숫자만 돌려주고, 테이블 전체 조회는 여전히 관리자만 가능.
+create or replace function get_trial_runs(p_mac text)
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce((select runs_used from trial_usage where mac_address = p_mac), 0)
+$$;
+
+grant execute on function get_trial_runs(text) to anon;
+
 -- 9. 조회는 다른 테이블들과 동일하게 딱 대표님 계정만 가능
 create policy "admin_only_read_trial_usage"
   on trial_usage for select
