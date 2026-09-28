@@ -970,3 +970,14 @@ section h2 {
         width: 100%;
     }
 }
+
+/* 첫 화면 안심 원칙 패널 (2026-09-28, 예시 후기 마키를 대체) */
+.trust-panel {
+    background: #fff; border: 1px solid #e0e7ff; border-radius: 24px; padding: 28px 26px;
+    box-shadow: 0 20px 40px rgba(79, 70, 229, 0.10); display: flex; flex-direction: column; gap: 18px; max-width: 460px; margin: 0 auto;
+}
+.trust-panel-title { font-weight: 800; font-size: 1.15rem; color: #1e1b4b; }
+.trust-item { display: flex; gap: 14px; align-items: flex-start; }
+.trust-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; background: #eef2ff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+.trust-head { font-weight: 800; color: #111827; margin-bottom: 4px; }
+.trust-body { color: #475569; font-size: 0.93rem; line-height: 1.6; }
