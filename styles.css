@@ -1003,3 +1003,9 @@ section h2 {
     .sample-card { padding: 20px 16px; }
     .sample-step { grid-template-columns: 1fr; gap: 14px; }
 }
+
+/* 설치 안내 영상 (2026-09-28) */
+.install-video { margin-top: 28px; text-align: center; }
+.install-video-title { font-weight: 800; font-size: 1.1rem; color: #1e1b4b; margin-bottom: 12px; }
+.install-video video { width: 100%; max-width: 760px; aspect-ratio: 16 / 9; border-radius: 14px; background: #0f172a; box-shadow: 0 16px 32px rgba(15, 23, 42, 0.15); }
+.install-video-note { margin-top: 10px; font-size: 0.9rem; color: #64748b; }
