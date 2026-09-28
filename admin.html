@@ -108,6 +108,20 @@
         color: #4b5563; font-size: 0.85rem; font-weight: 600; cursor: pointer;
     }
     .filter-tab.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+    .fcount { display: inline-block; min-width: 18px; margin-left: 3px; padding: 0 6px; border-radius: 10px; background: #f3f4f6; color: #4b5563; font-size: 0.75rem; }
+    .filter-tab.active .fcount { background: rgba(255,255,255,0.25); color: #fff; }
+    .filter-hint { color: #9ca3af; font-size: 0.8rem; margin: -6px 0 12px; }
+
+    /* 신청 표: 옆으로 스크롤하지 않게 칸 안에서 줄바꿈 */
+    #applications-table td { white-space: normal; vertical-align: top; }
+    #applications-table td.nowrap { white-space: nowrap; }
+    #applications-table .q-cell { white-space: nowrap; max-width: 240px; }
+    #applications-table .q-cell.open { white-space: pre-wrap; }
+    .sub-line { color: #9ca3af; font-size: 0.8rem; margin-top: 3px; }
+    .sub-line .pay { color: #4338ca; font-weight: 700; }
+    .row-actions { display: flex; gap: 6px; flex-wrap: nowrap; }
+    .row-actions button { white-space: nowrap; }
+    #applications-table .badge { display: inline-block; white-space: nowrap; margin: 2px 0 0 2px; }
     .search-input {
         flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 20px; font-size: 0.88rem;
     }
@@ -199,6 +213,8 @@
         .card-table > tbody > tr.detail-row { margin-top: -10px; border-top: none; border-radius: 0 0 12px 12px; background: #f9fafb; }
         .q-cell { max-width: none; }
         .key-cell { max-width: 160px; }
+        .cellbox { text-align: right; }
+        #applications-table .q-cell { white-space: normal; overflow: visible; }
     }
 </style>
 </head>
@@ -250,9 +266,9 @@
             <h2>📝 신청 내역</h2>
             <div class="toolbar">
                 <div class="filter-tabs" id="applications-status-tabs">
-                    <button type="button" class="filter-tab active" data-status="todo">처리할 것</button>
-                    <button type="button" class="filter-tab" data-status="new">신규만</button>
-                    <button type="button" class="filter-tab" data-status="all">전체</button>
+                    <button type="button" class="filter-tab active" data-status="todo" title="신규 + 연락완료 (아직 결제·취소로 끝나지 않은 신청)">처리할 것 <span class="fcount" id="cnt-todo"></span></button>
+                    <button type="button" class="filter-tab" data-status="new" title="아직 한 번도 연락하지 않은 신청">신규만 <span class="fcount" id="cnt-new"></span></button>
+                    <button type="button" class="filter-tab" data-status="all" title="결제완료·취소까지 전부">전체 <span class="fcount" id="cnt-all"></span></button>
                 </div>
                 <div class="divider"></div>
                 <div class="filter-tabs" id="applications-filter-tabs">
@@ -260,12 +276,13 @@
                     <button type="button" class="filter-tab" data-filter="trial">무료체험</button>
                     <button type="button" class="filter-tab" data-filter="paid">유료문의</button>
                 </div>
-                <input type="search" class="search-input" id="applications-search" placeholder="🔍 이름·연락처·업종·질문 검색">
+                <input type="search" class="search-input" id="applications-search" placeholder="🔍 이름·연락처·업종·질문·금액 검색">
             </div>
+            <p class="filter-hint"><b>처리할 것</b> = 신규 + 연락완료 · <b>신규만</b> = 아직 연락 안 한 신청 · <b>전체</b> = 결제완료·취소 포함. 오른쪽 종류 버튼과 함께 쓸 수 있어요.</p>
             <div class="table-scroll">
                 <table id="applications-table" class="card-table">
                     <thead>
-                        <tr><th>신청일시</th><th>이름</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th><th>빠른발급</th><th>삭제</th></tr>
+                        <tr><th>신청</th><th>연락처</th><th>업종 / 결제</th><th>질문</th><th>상태</th><th>관리</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -645,8 +662,26 @@ function setApplicationsStatusFilter(value) {
     renderApplicationsTable();
 }
 
+// 결제방법 칸을 짧게: "계좌이체"만 있으면 무료체험, 플랜이 붙어 있으면 "계좌이체 - " 와 "(정가 ... 할인)" 설명을 떼고 보여준다
+function paymentLabel(row) {
+    if (isTrialApplication(row)) return '<span class="badge">무료체험</span>';
+    const p = (row.payment_method || '').replace(/^계좌이체\s*-\s*/, '').replace(/\s*\(정가[^)]*\)/, '');
+    return `<span class="pay">${esc(p || row.payment_method || '-')}</span>`;
+}
+
+// 필터 버튼 옆 건수: 지금 고른 종류(모든 종류/무료체험/유료문의) 안에서 센다
+function updateApplicationsFilterCounts() {
+    const scoped = allApplications.filter(row =>
+        applicationsFilter === 'trial' ? isTrialApplication(row)
+        : applicationsFilter === 'paid' ? !isTrialApplication(row) : true);
+    document.getElementById('cnt-todo').textContent = scoped.filter(isTodoApplication).length;
+    document.getElementById('cnt-new').textContent = scoped.filter(isNewApplication).length;
+    document.getElementById('cnt-all').textContent = scoped.length;
+}
+
 function renderApplicationsTable() {
     updateApplicationsSummary();
+    updateApplicationsFilterCounts();
     const q = applicationsSearch.toLowerCase();
     const rows = allApplications.filter(row => {
         if (applicationsFilter === 'trial' && !isTrialApplication(row)) return false;
@@ -685,6 +720,7 @@ function renderApplicationsTable() {
             });
             row.status = select.value;
             updateApplicationsSummary();
+            updateApplicationsFilterCounts();
         });
 
         const deleteBtn = document.createElement('button');
@@ -706,22 +742,19 @@ function renderApplicationsTable() {
 
         const newBadge = isNewApplication(row) ? ' <span class="badge badge-new">NEW</span>' : '';
         const question = (row.question || '').trim();
+        const when = `${dt.toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'})} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}`;
         tr.innerHTML = `
-            <td data-label="신청일시">${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</td>
-            <td data-label="이름"><b>${esc(row.name)}</b>${newBadge}${trialDiscountBadge(row)}</td>
-            <td data-label="연락처">${esc(row.contact_type)} · ${esc(row.contact_value)}</td>
-            <td data-label="업종">${esc(row.industry)}</td>
-            <td data-label="결제방법">${esc(row.payment_method)}</td>
+            <td data-label="신청"><div class="cellbox"><div><b>${esc(row.name)}</b>${newBadge}${trialDiscountBadge(row)}</div><div class="sub-line">${when}</div></div></td>
+            <td data-label="연락처" class="nowrap">${esc(row.contact_type)} · ${esc(row.contact_value)}</td>
+            <td data-label="업종 / 결제"><div class="cellbox"><div>${esc(row.industry)}</div><div class="sub-line">${paymentLabel(row)}</div></div></td>
             <td data-label="질문" class="q-cell${question ? '' : ' empty'}" title="${question ? '눌러서 펼치기' : ''}">${question ? esc(question) : '-'}</td>
             <td data-label="상태"></td>
-            <td data-label="빠른발급"></td>
-            <td data-label="삭제"></td>
+            <td data-label="관리"><div class="row-actions"></div></td>
         `;
-        const qCell = tr.children[5];
+        const qCell = tr.children[3];
         if (question) qCell.addEventListener('click', () => qCell.classList.toggle('open'));
-        tr.children[6].appendChild(select);
-        tr.children[7].appendChild(issueBtn);
-        tr.children[8].appendChild(deleteBtn);
+        tr.children[4].appendChild(select);
+        tr.children[5].firstElementChild.append(issueBtn, deleteBtn);
         tbody.appendChild(tr);
     });
 }
