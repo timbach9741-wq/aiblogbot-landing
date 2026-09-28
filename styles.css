@@ -981,3 +981,25 @@ section h2 {
 .trust-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; background: #eef2ff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
 .trust-head { font-weight: 800; color: #111827; margin-bottom: 4px; }
 .trust-body { color: #475569; font-size: 0.93rem; line-height: 1.6; }
+
+/* 실제 발행 예시 섹션 (2026-09-28) */
+.sample-section { max-width: 1100px; margin: 0 auto; padding: 80px 20px 40px; text-align: center; }
+.sample-section h2 { font-size: 2rem; margin: 14px 0 12px; color: #0f172a; }
+.sample-desc { color: #475569; line-height: 1.7; margin: 0 auto 36px; max-width: 720px; }
+.sample-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 32px; text-align: left; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06); }
+.sample-post-title { font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+.sample-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.sample-meta span { background: #f1f5f9; color: #475569; font-size: 0.85rem; font-weight: 700; padding: 6px 12px; border-radius: 20px; }
+.sample-step { display: grid; grid-template-columns: 320px 1fr; gap: 28px; align-items: start; padding: 24px 0; border-top: 1px solid #f1f5f9; }
+.sample-photo { margin: 0; position: relative; }
+.sample-photo img { width: 100%; height: auto; border-radius: 14px; display: block; }
+.sample-photo figcaption { position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.75); color: #fff; font-size: 0.8rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; }
+.sample-step-head { font-weight: 800; color: #4338ca; margin-bottom: 8px; }
+.sample-text p { color: #334155; line-height: 1.8; margin: 0 0 10px; font-size: 0.97rem; }
+.sample-hint { color: #64748b; font-size: 0.85rem; }
+@media (max-width: 768px) {
+    .sample-section { padding: 56px 16px 24px; }
+    .sample-section h2 { font-size: 1.5rem; }
+    .sample-card { padding: 20px 16px; }
+    .sample-step { grid-template-columns: 1fr; gap: 14px; }
+}
