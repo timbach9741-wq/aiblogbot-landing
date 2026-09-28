@@ -446,15 +446,78 @@ async function login(email, password) {
     });
     if (!res.ok) throw new Error('login failed');
     const data = await res.json();
+    saveSession(data);
+}
+
+// --- 로그인 유지 ---
+// Supabase 로그인 토큰은 1시간이면 만료된다. 예전엔 갱신을 안 해서, 페이지를 1시간 넘게
+// 열어두면 발급/저장이 "실패"로만 떴다. 만료 직전이거나 401이 오면 refresh_token으로 새로 받는다.
+let refreshToken = sessionStorage.getItem('ablog_admin_refresh') || null;
+let refreshing = null;
+
+function saveSession(data) {
     accessToken = data.access_token;
+    refreshToken = data.refresh_token || refreshToken;
     sessionStorage.setItem('ablog_admin_token', accessToken);
+    if (refreshToken) sessionStorage.setItem('ablog_admin_refresh', refreshToken);
+}
+
+function tokenExpiresAt(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return payload.exp * 1000;
+    } catch (e) { return 0; }
+}
+
+async function refreshSession() {
+    if (!refreshToken) return false;
+    if (!refreshing) {
+        refreshing = (async () => {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: refreshToken }),
+                });
+                if (!res.ok) return false;
+                saveSession(await res.json());
+                return true;
+            } catch (e) { return false; } finally { refreshing = null; }
+        })();
+    }
+    return refreshing;
+}
+
+function forceRelogin() {
+    sessionStorage.removeItem('ablog_admin_token');
+    sessionStorage.removeItem('ablog_admin_refresh');
+    accessToken = null; refreshToken = null;
+    const modal = document.getElementById('quick-issue-modal');
+    if (modal) modal.style.display = 'none';
+    dashboard.style.display = 'none';
+    loginScreen.style.display = 'block';
+    const errorEl = document.getElementById('login-error');
+    errorEl.textContent = '로그인이 만료됐어요. 다시 로그인해주세요.';
+    errorEl.style.display = 'block';
+}
+
+// 관리자 권한이 필요한 모든 요청은 이걸 거친다: 만료 1분 전이면 미리 갱신, 401이면 갱신 후 1회 재시도
+async function apiFetch(url, opts = {}) {
+    if (accessToken && tokenExpiresAt(accessToken) - Date.now() < 60000) await refreshSession();
+    const withAuth = () => ({ ...opts, headers: { ...(opts.headers || {}), ...authHeaders() } });
+    let res = await fetch(url, withAuth());
+    if (res.status === 401) {
+        if (await refreshSession()) res = await fetch(url, withAuth());
+        else { forceRelogin(); throw new Error('로그인이 만료됐어요. 다시 로그인해주세요.'); }
+    }
+    return res;
 }
 
 // [2026-09-27] 정식 키는 서버(Edge Function "license")가 비공개 키로 서명해서 발급한다.
 // 예전처럼 이 페이지에서 SALT로 직접 계산하면 소스를 본 누구나 키를 만들 수 있었다.
 // 관리자 로그인 토큰이 있어야만 발급된다.
 async function generateLicenseKey(macRaw, days) {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/license`, {
+    const res = await apiFetch(`${SUPABASE_URL}/functions/v1/license`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ action: 'issue', mac: macRaw.trim().toUpperCase(), days }),
@@ -565,7 +628,7 @@ let applicationsStatusFilter = 'todo';
 let applicationsSearch = '';
 
 async function loadApplications() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?select=*&order=created_at.desc`, { headers: authHeaders() });
+    const res = await apiFetch(`${SUPABASE_URL}/rest/v1/applications?select=*&order=created_at.desc`, { headers: authHeaders() });
     allApplications = await res.json();
     renderApplicationsTable();
 }
@@ -615,7 +678,7 @@ function renderApplicationsTable() {
             select.appendChild(o);
         });
         select.addEventListener('change', async () => {
-            await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+            await apiFetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
                 method: 'PATCH',
                 headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
                 body: JSON.stringify({ status: select.value }),
@@ -629,7 +692,7 @@ function renderApplicationsTable() {
         deleteBtn.textContent = '삭제';
         deleteBtn.addEventListener('click', async () => {
             if (!confirm(`"${row.name}" 신청 내역을 삭제할까요? 되돌릴 수 없습니다.`)) return;
-            await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+            await apiFetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
                 method: 'DELETE',
                 headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
             });
@@ -683,7 +746,7 @@ document.getElementById('applications-search').addEventListener('input', (e) => 
 
 // ---------------- 활성화 코드 (등록 대기분만) ----------------
 async function loadActivationCodes() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_codes?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
+    const res = await apiFetch(`${SUPABASE_URL}/rest/v1/activation_codes?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
     const rows = res.ok ? await res.json() : [];
     // 등록된 코드는 DB 함수가 licenses에 자동 기록하므로 고객 목록에서 보인다 → 여기엔 대기분만
     const pending = rows.filter(row => !row.mac_address);
@@ -734,7 +797,7 @@ function licenseStatus(row) {
 }
 
 async function loadLicenses() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=*&order=issued_at.desc`, { headers: authHeaders() });
+    const res = await apiFetch(`${SUPABASE_URL}/rest/v1/licenses?select=*&order=issued_at.desc`, { headers: authHeaders() });
     allLicenses = await res.json();
     renderExpiring();
     renderCustomers();
@@ -840,7 +903,7 @@ function renderCustomers() {
             licDeleteBtn.textContent = '삭제';
             licDeleteBtn.addEventListener('click', async () => {
                 if (!confirm(`"${row.customer_name}" 라이선스 기록(${row.issued_at} 발급)을 삭제할까요? 되돌릴 수 없습니다.`)) return;
-                await fetch(`${SUPABASE_URL}/rest/v1/licenses?id=eq.${row.id}`, {
+                await apiFetch(`${SUPABASE_URL}/rest/v1/licenses?id=eq.${row.id}`, {
                     method: 'DELETE',
                     headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
                 });
@@ -867,11 +930,11 @@ document.getElementById('customers-search').addEventListener('input', (e) => {
 
 // ---------------- 무료체험 ----------------
 async function loadTrialUsage() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/trial_usage?select=*&order=last_used_at.desc`, { headers: authHeaders() });
+    const res = await apiFetch(`${SUPABASE_URL}/rest/v1/trial_usage?select=*&order=last_used_at.desc`, { headers: authHeaders() });
     const rows = await res.json();
 
     // 체험판 라이선스 발급 기록(있는 경우)에서 MAC -> 고객명을 대조해서 같이 보여준다.
-    const licRes = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=mac_address,customer_name&period_months=eq.-1`, { headers: authHeaders() });
+    const licRes = await apiFetch(`${SUPABASE_URL}/rest/v1/licenses?select=mac_address,customer_name&period_months=eq.-1`, { headers: authHeaders() });
     const licRows = await licRes.json();
     const nameByMac = {};
     licRows.forEach(r => { if (r.mac_address) nameByMac[r.mac_address.toUpperCase()] = r.customer_name; });
@@ -910,11 +973,11 @@ async function loadTrialUsage() {
 
 // ---------------- 오류 로그 ----------------
 async function loadErrorLogs() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/error_logs?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
+    const res = await apiFetch(`${SUPABASE_URL}/rest/v1/error_logs?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
     const rows = await res.json();
 
     // 라이선스 발급 기록에서 MAC -> 고객명을 대조해서 같이 보여준다 (trial_usage와 동일한 방식).
-    const licRes = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=mac_address,customer_name&order=issued_at.desc`, { headers: authHeaders() });
+    const licRes = await apiFetch(`${SUPABASE_URL}/rest/v1/licenses?select=mac_address,customer_name&order=issued_at.desc`, { headers: authHeaders() });
     const licRows = await licRes.json();
     const nameByMac = {};
     licRows.forEach(r => { if (r.mac_address && !(r.mac_address.toUpperCase() in nameByMac)) nameByMac[r.mac_address.toUpperCase()] = r.customer_name; });
@@ -946,7 +1009,7 @@ async function loadErrorLogs() {
         errDeleteBtn.textContent = '삭제';
         errDeleteBtn.addEventListener('click', async () => {
             if (!confirm('이 오류 로그를 삭제할까요? 되돌릴 수 없습니다.')) return;
-            await fetch(`${SUPABASE_URL}/rest/v1/error_logs?id=eq.${row.id}`, {
+            await apiFetch(`${SUPABASE_URL}/rest/v1/error_logs?id=eq.${row.id}`, {
                 method: 'DELETE',
                 headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
             });
@@ -1015,7 +1078,7 @@ document.getElementById('license-form').addEventListener('submit', async (e) => 
             issued_at: issuedAt,
             expires_at: isTrial ? null : (isOneDay ? addDays(issuedAt, 1) : addMonths(issuedAt, parseInt(period, 10))),
         };
-        await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
+        await apiFetch(`${SUPABASE_URL}/rest/v1/licenses`, {
             method: 'POST',
             headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
             body: JSON.stringify(payload),
@@ -1075,7 +1138,7 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
             let code = null;
             for (let attempt = 0; attempt < 3 && !code; attempt++) {
                 const candidate = generateActivationCode();
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_codes`, {
+                const res = await apiFetch(`${SUPABASE_URL}/rest/v1/activation_codes`, {
                     method: 'POST',
                     headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
                     body: JSON.stringify({
@@ -1088,11 +1151,16 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
                     }),
                 });
                 if (res.ok) code = candidate;
-                else if (res.status !== 409) { alert('코드 저장에 실패했습니다. 다시 로그인 후 시도해주세요.'); return; }
+                else if (res.status !== 409) {
+                    const detail = await res.text().catch(() => '');
+                    alert(`코드 저장에 실패했습니다. (오류 ${res.status})
+${detail.slice(0, 200)}`);
+                    return;
+                }
             }
             if (!code) { alert('코드 생성에 실패했습니다. 다시 시도해주세요.'); return; }
             if (row.status !== '결제완료') {
-                await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+                await apiFetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
                     method: 'PATCH',
                     headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
                     body: JSON.stringify({ status: '결제완료' }),
@@ -1111,7 +1179,7 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
         const issuedAt = new Date().toISOString().slice(0, 10);
         const periodMonths = days === 1 ? 0 : Math.round(days / 30);
 
-        await fetch(`${SUPABASE_URL}/rest/v1/licenses`, {
+        await apiFetch(`${SUPABASE_URL}/rest/v1/licenses`, {
             method: 'POST',
             headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
             body: JSON.stringify({
@@ -1128,7 +1196,7 @@ document.getElementById('quick-issue-generate').addEventListener('click', async 
 
         // 결제완료 상태가 아니었으면 이 발급을 계기로 함께 갱신해둔다.
         if (row.status !== '결제완료') {
-            await fetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
+            await apiFetch(`${SUPABASE_URL}/rest/v1/applications?id=eq.${row.id}`, {
                 method: 'PATCH',
                 headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
                 body: JSON.stringify({ status: '결제완료' }),
@@ -1169,6 +1237,7 @@ document.getElementById('login-btn').addEventListener('click', async () => {
     const password = document.getElementById('login-password').value;
     const errorEl = document.getElementById('login-error');
     errorEl.style.display = 'none';
+    errorEl.textContent = '로그인에 실패했습니다. 이메일/비밀번호를 확인해주세요.';
     try {
         await login(email, password);
         showDashboard();
@@ -1179,7 +1248,8 @@ document.getElementById('login-btn').addEventListener('click', async () => {
 
 document.getElementById('logout-btn').addEventListener('click', () => {
     sessionStorage.removeItem('ablog_admin_token');
-    accessToken = null;
+    sessionStorage.removeItem('ablog_admin_refresh');
+    accessToken = null; refreshToken = null;
     dashboard.style.display = 'none';
     loginScreen.style.display = 'block';
 });
