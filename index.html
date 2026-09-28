@@ -714,7 +714,8 @@
                         <div style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; color: #475569; line-height: 1.6;">
                             <div style="font-weight: 700; color: #1e293b; margin-bottom: 8px;">선택하신 이용권: <span id="selected-plan-text"></span></div>
                             결제는 <b>계좌이체</b>로 안내드립니다.<br>
-                            입금 계좌: <b>카카오뱅크 3333-37-9662102 (예금주: 이홍석)</b>
+                            입금 계좌: <b>카카오뱅크 3333-37-9662102 (예금주: 이홍석)</b><br>
+                            <span style="color:#b45309;">※ 입금자명은 <b>신청서에 적은 이름과 같게</b> 해주세요. 금액은 표시된 금액 그대로 보내주시면 돼요.</span>
                         </div>
                     </div>
 
@@ -852,6 +853,39 @@
                 const banner = document.createElement('div');
                 banner.style.cssText = 'max-width: 720px; margin: 0 auto 30px; padding: 18px 22px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 14px; color: #3730a3; text-align: center; line-height: 1.6;';
                 banner.innerHTML = '🎉 <b>무료체험 어떠셨나요?</b><br>아래에서 이용권을 고르시면 <b>PC 고유번호가 자동으로 함께 전달</b>돼요. 따로 알려주실 필요 없어요!';
+
+                // 체험 3회를 다 쓴 프로그램에서 넘어오면 72시간 한정 20% 할인가를 보여준다.
+                // 할인가 끝자리를 200원으로 맞춰서, 통장 입금 금액만 보고도 체험할인 고객인지 알 수 있게 했다.
+                // 주소는 누구나 고칠 수 있으므로 실제 대상 여부는 관리자 페이지가 서버 체험 기록으로 확인한다.
+                const promoUntil = parseInt(urlParams.get('until') || '0', 10) * 1000;
+                if (urlParams.get('promo') === 'trial' && promoUntil) {
+                    const discountPlans = {
+                        'btn-standard': { price: '71,200원', was: '89,000원', display: '1개월 71,200원 (체험할인 20%)', note: '20% 할인 · 결제 후 즉시 이용' },
+                        'btn-deluxe':   { price: '191,200원', was: '239,000원', display: '3개월 191,200원 (체험할인 20%)', note: '월 63,733원 · 20% 할인' },
+                        'btn-premium':  { price: '359,200원', was: '449,000원', display: '6개월 359,200원 (체험할인 20%)', note: '월 59,867원 · 20% 할인' },
+                    };
+                    if (Date.now() < promoUntil) {
+                        Object.entries(discountPlans).forEach(([id, plan]) => {
+                            const btn = document.getElementById(id);
+                            if (!btn) return;
+                            btn.dataset.planDisplay = plan.display;
+                            const priceEl = btn.closest('.price-card') && btn.closest('.price-card').querySelector('.price');
+                            if (priceEl) {
+                                priceEl.innerHTML = `<span style="display:block; font-size:0.45em; color:#94a3b8; text-decoration:line-through; line-height:1.4;">정가 ${plan.was}</span>${plan.price}`;
+                                const noteEl = priceEl.nextElementSibling;
+                                if (noteEl && noteEl.tagName === 'DIV') { noteEl.textContent = plan.note; noteEl.style.color = '#c2410c'; }
+                            }
+                        });
+                        const untilText = new Date(promoUntil).toLocaleString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
+                        const hoursLeft = Math.max(1, Math.floor((promoUntil - Date.now()) / 3600000));
+                        banner.style.background = '#fff7ed';
+                        banner.style.borderColor = '#fdba74';
+                        banner.style.color = '#9a3412';
+                        banner.innerHTML = `🎁 <b>체험 완료 고객 전용 20% 할인</b> · ${hoursLeft}시간 남음<br>아래 가격은 <b>${untilText}까지</b>만 적용돼요. PC 고유번호도 자동으로 함께 전달돼요.`;
+                    } else {
+                        banner.innerHTML = '🎉 <b>무료체험 어떠셨나요?</b><br>체험 완료 할인 기간은 끝났지만, 아래에서 이용권을 고르시면 <b>PC 고유번호가 자동으로 함께 전달</b>돼요.';
+                    }
+                }
                 const pricingTitle = pricingSection && pricingSection.querySelector('h2');
                 if (pricingTitle) pricingTitle.insertAdjacentElement('afterend', banner);
                 else if (pricingSection) pricingSection.prepend(banner);

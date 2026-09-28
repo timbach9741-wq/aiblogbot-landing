@@ -538,6 +538,27 @@ function isTodoApplication(row) {
     return row.status !== '결제완료' && row.status !== '취소';
 }
 
+// 체험 완료 할인(72시간) 확인용: MAC -> 서버에 기록된 체험 사용 정보 (loadTrialUsage가 채움)
+const TRIAL_OFFER_HOURS = 72;
+let trialUsageByMac = {};
+
+// 홈페이지 할인가는 주소만 고치면 누구나 볼 수 있으므로, 신청 시각이 그 PC의
+// 마지막(3번째) 체험 발행으로부터 72시간 안인지 서버 기록으로 확인해 표시한다.
+function trialDiscountBadge(row) {
+    if (!(row.payment_method || '').includes('체험할인')) return '';
+    const m = /\[PC 고유번호\(자동\): ([0-9A-F:-]+)\]/i.exec(row.question || '');
+    const usage = m ? trialUsageByMac[m[1].toUpperCase()] : null;
+    if (!usage || usage.runs_used < 3) {
+        return ' <span class="badge badge-soon" title="이 PC의 체험 완료 기록이 없어요. 정가 대상일 수 있어요.">체험할인 · 확인 필요</span>';
+    }
+    // 앱의 기준 시각(마지막 발행 완료)과 서버 기록(발행 시작) 사이 오차를 감안해 1시간 여유를 둔다
+    const deadline = new Date(usage.last_used_at).getTime() + (TRIAL_OFFER_HOURS + 1) * 3600000;
+    if (new Date(row.created_at).getTime() <= deadline) {
+        return ' <span class="badge badge-ok" title="체험 완료 후 72시간 안에 들어온 신청이에요.">체험할인 ✓</span>';
+    }
+    return ' <span class="badge badge-expired" title="체험 완료 후 72시간이 지나서 들어온 신청이에요.">체험할인 · 기한 지남</span>';
+}
+
 let allApplications = [];
 let applicationsFilter = 'all';
 let applicationsStatusFilter = 'todo';
@@ -624,7 +645,7 @@ function renderApplicationsTable() {
         const question = (row.question || '').trim();
         tr.innerHTML = `
             <td data-label="신청일시">${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</td>
-            <td data-label="이름"><b>${esc(row.name)}</b>${newBadge}</td>
+            <td data-label="이름"><b>${esc(row.name)}</b>${newBadge}${trialDiscountBadge(row)}</td>
             <td data-label="연락처">${esc(row.contact_type)} · ${esc(row.contact_value)}</td>
             <td data-label="업종">${esc(row.industry)}</td>
             <td data-label="결제방법">${esc(row.payment_method)}</td>
@@ -858,6 +879,10 @@ async function loadTrialUsage() {
     const tbody = document.querySelector('#trial-usage-table tbody');
     tbody.innerHTML = '';
     document.getElementById('trial-usage-empty').style.display = rows.length ? 'none' : 'block';
+
+    trialUsageByMac = {};
+    rows.forEach(row => { if (row.mac_address) trialUsageByMac[row.mac_address.toUpperCase()] = row; });
+    renderApplicationsTable();  // 체험할인 확인 표시는 이 기록이 있어야 정확하다
 
     let activeCount = 0;
     rows.forEach(row => {
