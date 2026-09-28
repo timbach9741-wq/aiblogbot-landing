@@ -13,9 +13,9 @@
         margin: 0;
         color: #111827;
     }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 30px 20px 80px; }
-    h1 { font-size: 1.6rem; margin-bottom: 4px; }
-    .sub { color: #6b7280; margin-bottom: 30px; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+    h1 { font-size: 1.5rem; margin: 0 0 4px; }
+    .sub { color: #6b7280; }
 
     /* 로그인 화면 */
     #login-screen {
@@ -39,21 +39,51 @@
 
     /* 대시보드 */
     #dashboard { display: none; }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    #logout-btn { background: none; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; color: #4b5563; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    #logout-btn { background: none; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; color: #4b5563; flex-shrink: 0; }
 
-    .section { background: #fff; border-radius: 14px; padding: 25px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .section h2 { font-size: 1.2rem; margin-top: 0; margin-bottom: 18px; }
+    /* 요약 카드 */
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .summary-card {
+        background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px;
+        text-align: left; cursor: pointer; font-family: inherit; color: inherit;
+    }
+    .summary-card:hover { border-color: #a5b4fc; }
+    .summary-card .num { font-size: 1.8rem; font-weight: 800; line-height: 1.1; }
+    .summary-card .label { color: #6b7280; font-size: 0.85rem; margin-top: 4px; }
+    .summary-card.alert .num { color: #dc2626; }
+    .summary-card.warn .num { color: #ea580c; }
+    .summary-card.zero .num { color: #9ca3af; }
+
+    /* 탭 */
+    .tabs {
+        display: flex; gap: 4px; background: #e5e7eb; padding: 4px; border-radius: 12px;
+        margin-bottom: 18px; position: sticky; top: 8px; z-index: 10; overflow-x: auto; scrollbar-width: none;
+    }
+    .tab {
+        flex: 1; padding: 10px 12px; border: none; border-radius: 9px; background: transparent;
+        font-family: inherit; font-size: 0.92rem; font-weight: 700; color: #4b5563; cursor: pointer; white-space: nowrap;
+    }
+    .tab.active { background: #fff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .tab .count { display: inline-block; min-width: 20px; padding: 1px 6px; margin-left: 4px; border-radius: 10px; background: #ef4444; color: #fff; font-size: 0.75rem; }
+    .tab .count:empty { display: none; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .section { background: #fff; border-radius: 14px; padding: 22px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .section h2 { font-size: 1.1rem; margin-top: 0; margin-bottom: 14px; }
+    .section .desc { color: #6b7280; font-size: 14px; margin: -6px 0 14px; }
 
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
     th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
     th { color: #6b7280; font-weight: 600; background: #f9fafb; }
     tr.expiring td { background: #fff7ed; }
     tr.expired td { background: #fef2f2; color: #9ca3af; }
-    .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; background: #f3f4f6; color: #4b5563; }
     .badge-soon { background: #fed7aa; color: #9a3412; }
     .badge-expired { background: #fecaca; color: #991b1b; }
     .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-new { background: #fee2e2; color: #b91c1c; }
 
     select.status-select {
         padding: 5px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 0.85rem;
@@ -63,18 +93,42 @@
         border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
     }
     .delete-btn:hover { background: #fecaca; }
+    .ghost-btn {
+        background: #fff; color: #4b5563; border: 1px solid #d1d5db;
+        border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+    }
 
     .table-scroll { overflow-x: auto; }
 
-    .filter-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+    /* 필터/검색 줄 */
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+    .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
     .filter-tab {
-        padding: 7px 16px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff;
+        padding: 7px 14px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff;
         color: #4b5563; font-size: 0.85rem; font-weight: 600; cursor: pointer;
     }
     .filter-tab.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+    .search-input {
+        flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 20px; font-size: 0.88rem;
+    }
+    .divider { width: 1px; height: 22px; background: #e5e7eb; }
 
-    /* 라이선스 추가 폼 */
-    #license-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    /* 긴 질문: 한 줄만 보이고 누르면 펼침 */
+    .q-cell { max-width: 260px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #374151; }
+    .q-cell.open { white-space: pre-wrap; word-break: break-all; overflow: visible; }
+    .q-cell.empty { cursor: default; color: #9ca3af; }
+
+    /* 고객 이력 펼침 */
+    tr.detail-row > td { background: #f9fafb; padding: 10px 14px 14px; white-space: normal; }
+    .history-table th { background: transparent; font-size: 0.8rem; }
+    .history-table td { font-size: 0.85rem; }
+    .mono { font-family: monospace; font-size: 0.8rem; }
+    .key-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+
+    /* 라이선스 수동 추가 폼 (접힘) */
+    details.manual-add > summary { cursor: pointer; font-weight: 700; color: #4b5563; padding: 4px 0; }
+    details.manual-add[open] > summary { margin-bottom: 14px; }
+    #license-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
     #license-form input, #license-form select {
         padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; width: 100%;
     }
@@ -121,6 +175,31 @@
         background: #fff;
     }
     #quick-issue-copy { padding: 0 16px; border: none; border-radius: 8px; background: #10b981; color: #fff; font-weight: 700; cursor: pointer; }
+
+    /* 휴대폰: 요약 2칸, 신청/고객 표는 카드 모양 */
+    @media (max-width: 700px) {
+        .summary { grid-template-columns: repeat(2, 1fr); }
+        .section { padding: 16px; }
+        .top-bar h1 { font-size: 1.25rem; }
+        .top-bar .sub { display: none; }
+        .card-table thead { display: none; }
+        .card-table, .card-table tbody { display: block; }
+        .card-table > tbody > tr {
+            display: block; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 12px; padding: 6px 14px;
+        }
+        .card-table > tbody > tr > td {
+            display: flex; justify-content: space-between; align-items: center; gap: 12px;
+            white-space: normal; border: none; padding: 7px 0; text-align: right; word-break: break-all;
+        }
+        .card-table > tbody > tr > td::before {
+            content: attr(data-label); color: #6b7280; font-weight: 600; flex-shrink: 0; text-align: left;
+        }
+        .card-table > tbody > tr > td.full { display: block; text-align: left; }
+        .card-table > tbody > tr > td.full::before { content: none; }
+        .card-table > tbody > tr.detail-row { margin-top: -10px; border-top: none; border-radius: 0 0 12px 12px; background: #f9fafb; }
+        .q-cell { max-width: none; }
+        .key-cell { max-width: 160px; }
+    }
 </style>
 </head>
 <body>
@@ -142,112 +221,162 @@
         <button id="logout-btn">로그아웃</button>
     </div>
 
-    <div class="section">
-        <h2>⏰ 7일 이내 만료 예정 회원</h2>
-        <div class="table-scroll">
-            <table id="expiring-table">
-                <thead>
-                    <tr><th>고객명</th><th>연락처</th><th>이용권</th><th>만료일</th><th>남은 일수</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="empty-msg" id="expiring-empty" style="display:none;">7일 이내 만료 예정인 회원이 없습니다.</div>
+    <!-- 들어오자마자 할 일이 보이도록 요약 카드. 누르면 해당 탭으로 이동 -->
+    <div class="summary">
+        <button type="button" class="summary-card" data-goto="applications" data-app-filter="new">
+            <div class="num" id="sum-new">-</div><div class="label">새 신청 (신규)</div>
+        </button>
+        <button type="button" class="summary-card" data-goto="customers">
+            <div class="num" id="sum-expiring">-</div><div class="label">7일 내 만료</div>
+        </button>
+        <button type="button" class="summary-card" data-goto="errors">
+            <div class="num" id="sum-errors">-</div><div class="label">최근 7일 오류</div>
+        </button>
+        <button type="button" class="summary-card" data-goto="trials">
+            <div class="num" id="sum-trials">-</div><div class="label">무료체험 진행 중</div>
+        </button>
+    </div>
+
+    <div class="tabs" id="tabs">
+        <button type="button" class="tab active" data-tab="applications">📝 신청<span class="count" id="tab-count-applications"></span></button>
+        <button type="button" class="tab" data-tab="customers">👤 고객·이용권<span class="count" id="tab-count-customers"></span></button>
+        <button type="button" class="tab" data-tab="trials">🧪 무료체험</button>
+        <button type="button" class="tab" data-tab="errors">🚨 오류<span class="count" id="tab-count-errors"></span></button>
+    </div>
+
+    <!-- 탭 1: 신청 -->
+    <div class="tab-panel active" data-panel="applications">
+        <div class="section">
+            <h2>📝 신청 내역</h2>
+            <div class="toolbar">
+                <div class="filter-tabs" id="applications-status-tabs">
+                    <button type="button" class="filter-tab active" data-status="todo">처리할 것</button>
+                    <button type="button" class="filter-tab" data-status="new">신규만</button>
+                    <button type="button" class="filter-tab" data-status="all">전체</button>
+                </div>
+                <div class="divider"></div>
+                <div class="filter-tabs" id="applications-filter-tabs">
+                    <button type="button" class="filter-tab active" data-filter="all">모든 종류</button>
+                    <button type="button" class="filter-tab" data-filter="trial">무료체험</button>
+                    <button type="button" class="filter-tab" data-filter="paid">유료문의</button>
+                </div>
+                <input type="search" class="search-input" id="applications-search" placeholder="🔍 이름·연락처·업종·질문 검색">
+            </div>
+            <div class="table-scroll">
+                <table id="applications-table" class="card-table">
+                    <thead>
+                        <tr><th>신청일시</th><th>이름</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th><th>빠른발급</th><th>삭제</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-msg" id="applications-empty" style="display:none;">해당하는 신청 내역이 없습니다.</div>
+            </div>
         </div>
     </div>
 
-    <div class="section">
-        <h2>➕ 라이선스 발급 기록 추가</h2>
-        <form id="license-form">
-            <input type="text" id="lic-name" placeholder="고객명 / 상호명" required>
-            <input type="text" id="lic-contact" placeholder="연락처 (카카오톡ID 등)">
-            <select id="lic-channel">
-                <option value="크몽">크몽</option>
-                <option value="홈페이지">홈페이지</option>
-                <option value="숨고">숨고</option>
-                <option value="기타">기타</option>
-            </select>
-            <input type="text" id="lic-mac" placeholder="MAC 주소 (체험판은 선택)">
-            <input type="text" id="lic-key" placeholder="발급된 라이선스 키" required>
-            <select id="lic-period">
-                <option value="1">1개월</option>
-                <option value="3">3개월</option>
-                <option value="6">6개월</option>
-                <option value="0">1일 (특수 발급용)</option>
-                <option value="trial">체험판 (3회)</option>
-            </select>
-            <button type="submit">발급 기록 저장</button>
-        </form>
-    </div>
+    <!-- 탭 2: 고객·이용권 -->
+    <div class="tab-panel" data-panel="customers">
+        <div class="section">
+            <h2>⏰ 7일 이내 만료 예정</h2>
+            <div class="table-scroll">
+                <table id="expiring-table">
+                    <thead>
+                        <tr><th>고객명</th><th>연락처</th><th>이용권</th><th>만료일</th><th>남은 일수</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-msg" id="expiring-empty" style="display:none;">7일 이내 만료 예정인 회원이 없습니다.</div>
+            </div>
+        </div>
 
-    <div class="section">
-        <h2>📋 전체 라이선스 발급 이력</h2>
-        <div class="table-scroll">
-            <table id="license-table">
-                <thead>
-                    <tr><th>고객명</th><th>연락처</th><th>채널</th><th>MAC</th><th>키</th><th>기간</th><th>발급일</th><th>만료일</th><th>상태</th><th>삭제</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="empty-msg" id="license-empty" style="display:none;">아직 발급 기록이 없습니다.</div>
+        <div class="section" id="pending-codes-section">
+            <h2>🔑 등록 대기 중인 활성화 코드</h2>
+            <p class="desc">고객에게 보냈지만 아직 프로그램에 붙여넣지 않은 코드예요. 등록되면 아래 고객 목록으로 옮겨져요.</p>
+            <div class="table-scroll">
+                <table id="activation-codes-table">
+                    <thead>
+                        <tr><th>발급일시</th><th>고객명</th><th>코드</th><th>기간</th><th></th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-msg" id="activation-codes-empty" style="display:none;">등록 대기 중인 코드가 없습니다.</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>👤 고객 목록</h2>
+            <p class="desc">PC(MAC) 하나당 한 줄로 가장 최근 이용권을 보여줘요. 연장·재발급 기록은 "이력"을 누르면 펼쳐져요.</p>
+            <div class="toolbar">
+                <input type="search" class="search-input" id="customers-search" placeholder="🔍 고객명·연락처·MAC 검색">
+            </div>
+            <div class="table-scroll">
+                <table id="license-table" class="card-table">
+                    <thead>
+                        <tr><th>고객명</th><th>연락처</th><th>채널</th><th>MAC</th><th>이용권</th><th>만료일</th><th>상태</th><th>이력</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-msg" id="license-empty" style="display:none;">아직 발급 기록이 없습니다.</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <details class="manual-add">
+                <summary>➕ 발급 기록 직접 추가 (크몽 등 외부 판매분)</summary>
+                <form id="license-form">
+                    <input type="text" id="lic-name" placeholder="고객명 / 상호명" required>
+                    <input type="text" id="lic-contact" placeholder="연락처 (카카오톡ID 등)">
+                    <select id="lic-channel">
+                        <option value="크몽">크몽</option>
+                        <option value="홈페이지">홈페이지</option>
+                        <option value="숨고">숨고</option>
+                        <option value="기타">기타</option>
+                    </select>
+                    <input type="text" id="lic-mac" placeholder="MAC 주소 (체험판은 선택)">
+                    <input type="text" id="lic-key" placeholder="발급된 라이선스 키" required>
+                    <select id="lic-period">
+                        <option value="1">1개월</option>
+                        <option value="3">3개월</option>
+                        <option value="6">6개월</option>
+                        <option value="0">1일 (특수 발급용)</option>
+                        <option value="trial">체험판 (3회)</option>
+                    </select>
+                    <button type="submit">발급 기록 저장</button>
+                </form>
+            </details>
         </div>
     </div>
 
-    <div class="section">
-        <h2>🔑 활성화 코드</h2>
-        <p style="color:#6b7280; font-size:14px; margin-top:-8px;">신청 내역의 "빠른발급"에서 MAC을 비워두면 코드가 발급됩니다. 고객이 프로그램에 붙여넣는 순간 그 PC에 묶이고, 위 라이선스 이력에도 자동 기록돼요. 이용 기간은 등록한 날부터 계산됩니다.</p>
-        <div class="table-scroll">
-            <table id="activation-codes-table">
-                <thead>
-                    <tr><th>발급일시</th><th>고객명</th><th>코드</th><th>기간</th><th>상태</th><th>등록된 MAC</th><th>만료일</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="empty-msg" id="activation-codes-empty" style="display:none;">아직 발급한 활성화 코드가 없습니다.</div>
+    <!-- 탭 3: 무료체험 -->
+    <div class="tab-panel" data-panel="trials">
+        <div class="section">
+            <h2>🧪 무료체험 사용 현황</h2>
+            <div class="table-scroll">
+                <table id="trial-usage-table">
+                    <thead>
+                        <tr><th>고객명</th><th>MAC</th><th>사용 횟수</th><th>최초 사용</th><th>최근 사용</th><th>상태</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-msg" id="trial-usage-empty" style="display:none;">아직 무료체험 사용 기록이 없습니다.</div>
+            </div>
         </div>
     </div>
 
-    <div class="section">
-        <h2>🧪 무료체험 사용 현황</h2>
-        <div class="table-scroll">
-            <table id="trial-usage-table">
-                <thead>
-                    <tr><th>고객명</th><th>MAC</th><th>사용 횟수</th><th>최초 사용</th><th>최근 사용</th><th>상태</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="empty-msg" id="trial-usage-empty" style="display:none;">아직 무료체험 사용 기록이 없습니다.</div>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>🚨 오류 로그</h2>
-        <p style="color:#6b7280; font-size:14px; margin-top:-8px;">고객 PC에서 자동화 실행 중 오류가 나면 자동으로 여기에 기록됩니다. 스크린샷 없이도 어느 고객이 어느 단계에서 무슨 오류를 겪었는지 확인할 수 있습니다.</p>
-        <div class="table-scroll">
-            <table id="error-logs-table">
-                <thead>
-                    <tr><th>발생시각</th><th>고객명</th><th>MAC</th><th>버전</th><th>단계</th><th>오류 내용</th><th>삭제</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="empty-msg" id="error-logs-empty" style="display:none;">아직 오류 로그가 없습니다.</div>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>📝 신청 내역</h2>
-        <div class="filter-tabs" id="applications-filter-tabs">
-            <button type="button" class="filter-tab active" data-filter="all">전체</button>
-            <button type="button" class="filter-tab" data-filter="trial">무료체험</button>
-            <button type="button" class="filter-tab" data-filter="paid">유료문의</button>
-        </div>
-        <div class="table-scroll">
-            <table id="applications-table">
-                <thead>
-                    <tr><th>신청일시</th><th>이름</th><th>연락방법</th><th>연락처</th><th>업종</th><th>결제방법</th><th>질문</th><th>상태</th><th>빠른발급</th><th>삭제</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="empty-msg" id="applications-empty" style="display:none;">아직 신청 내역이 없습니다.</div>
+    <!-- 탭 4: 오류 -->
+    <div class="tab-panel" data-panel="errors">
+        <div class="section">
+            <h2>🚨 오류 로그</h2>
+            <p class="desc">고객 PC에서 자동화 실행 중 오류가 나면 자동으로 여기에 기록됩니다. 스크린샷 없이도 어느 고객이 어느 단계에서 무슨 오류를 겪었는지 확인할 수 있습니다.</p>
+            <div class="table-scroll">
+                <table id="error-logs-table">
+                    <thead>
+                        <tr><th>발생시각</th><th>고객명</th><th>MAC</th><th>버전</th><th>단계</th><th>오류 내용</th><th>삭제</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-msg" id="error-logs-empty" style="display:none;">아직 오류 로그가 없습니다.</div>
+            </div>
         </div>
     </div>
 </div>
@@ -294,6 +423,12 @@ let accessToken = sessionStorage.getItem('ablog_admin_token') || null;
 
 const loginScreen = document.getElementById('login-screen');
 const dashboard = document.getElementById('dashboard');
+
+// 신청서는 누구나 쓸 수 있는 공개 폼이라, 입력값을 그대로 innerHTML에 넣으면
+// 신청서에 심어둔 스크립트가 관리자 화면에서 실행될 수 있다. 화면에 넣는 값은 전부 이걸 거친다.
+function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 function authHeaders() {
     return {
@@ -343,29 +478,43 @@ function generateActivationCode() {
     return `ACT-${chars.slice(0, 4)}-${chars.slice(4)}`;
 }
 
-async function loadActivationCodes() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_codes?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
-    const rows = res.ok ? await res.json() : [];
-    const tbody = document.querySelector('#activation-codes-table tbody');
-    tbody.innerHTML = '';
-    document.getElementById('activation-codes-empty').style.display = rows.length ? 'none' : 'block';
-    rows.forEach(row => {
-        const used = !!row.mac_address;
-        const periodLabel = row.period_days <= 1 ? '1일' : `${Math.round(row.period_days / 30)}개월`;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${new Date(row.created_at).toLocaleString('ko-KR')}</td>
-            <td>${row.customer_name || '-'}</td>
-            <td style="font-family:monospace;">${row.code}</td>
-            <td>${periodLabel}</td>
-            <td>${used ? '<span class="badge badge-ok">등록됨</span>' : '<span class="badge">미등록</span>'}</td>
-            <td>${row.mac_address || '-'}</td>
-            <td>${row.expires_on || '-'}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+// ---------------- 탭 / 요약 카드 ----------------
+const TAB_STORAGE_KEY = 'ablog_admin_tab';
+
+function switchTab(name) {
+    document.querySelectorAll('#tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+    try { localStorage.setItem(TAB_STORAGE_KEY, name); } catch (e) {}
 }
 
+document.querySelectorAll('#tabs .tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+document.querySelectorAll('.summary-card').forEach(card => {
+    card.addEventListener('click', () => {
+        if (card.dataset.appFilter) setApplicationsStatusFilter(card.dataset.appFilter);
+        switchTab(card.dataset.goto);
+        document.getElementById('tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+});
+
+try {
+    const savedTab = localStorage.getItem(TAB_STORAGE_KEY);
+    if (savedTab && document.querySelector(`#tabs .tab[data-tab="${savedTab}"]`)) switchTab(savedTab);
+} catch (e) {}
+
+function setSummary(id, count, tone) {
+    const el = document.getElementById(id);
+    el.textContent = count;
+    const card = el.closest('.summary-card');
+    card.classList.remove('alert', 'warn', 'zero');
+    card.classList.add(count === 0 ? 'zero' : tone);
+}
+
+function setTabCount(id, count) {
+    document.getElementById(id).textContent = count > 0 ? count : '';
+}
+
+// ---------------- 신청 내역 ----------------
 function daysUntil(dateStr) {
     if (!dateStr) return null;
     const today = new Date();
@@ -380,8 +529,19 @@ function isTrialApplication(row) {
     return row.payment_method === '계좌이체';
 }
 
+function isNewApplication(row) {
+    return !row.status || row.status === '신규';
+}
+
+// 결제완료/취소가 아니면 아직 손이 가야 하는 신청
+function isTodoApplication(row) {
+    return row.status !== '결제완료' && row.status !== '취소';
+}
+
 let allApplications = [];
 let applicationsFilter = 'all';
+let applicationsStatusFilter = 'todo';
+let applicationsSearch = '';
 
 async function loadApplications() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?select=*&order=created_at.desc`, { headers: authHeaders() });
@@ -389,10 +549,30 @@ async function loadApplications() {
     renderApplicationsTable();
 }
 
+function updateApplicationsSummary() {
+    const newCount = allApplications.filter(isNewApplication).length;
+    setSummary('sum-new', newCount, 'alert');
+    setTabCount('tab-count-applications', newCount);
+}
+
+function setApplicationsStatusFilter(value) {
+    applicationsStatusFilter = value;
+    document.querySelectorAll('#applications-status-tabs .filter-tab').forEach(b => b.classList.toggle('active', b.dataset.status === value));
+    renderApplicationsTable();
+}
+
 function renderApplicationsTable() {
+    updateApplicationsSummary();
+    const q = applicationsSearch.toLowerCase();
     const rows = allApplications.filter(row => {
-        if (applicationsFilter === 'trial') return isTrialApplication(row);
-        if (applicationsFilter === 'paid') return !isTrialApplication(row);
+        if (applicationsFilter === 'trial' && !isTrialApplication(row)) return false;
+        if (applicationsFilter === 'paid' && isTrialApplication(row)) return false;
+        if (applicationsStatusFilter === 'todo' && !isTodoApplication(row)) return false;
+        if (applicationsStatusFilter === 'new' && !isNewApplication(row)) return false;
+        if (q) {
+            const hay = [row.name, row.contact_value, row.contact_type, row.industry, row.question, row.payment_method].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+        }
         return true;
     });
 
@@ -419,6 +599,8 @@ function renderApplicationsTable() {
                 headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
                 body: JSON.stringify({ status: select.value }),
             });
+            row.status = select.value;
+            updateApplicationsSummary();
         });
 
         const deleteBtn = document.createElement('button');
@@ -438,21 +620,24 @@ function renderApplicationsTable() {
         issueBtn.textContent = '⚡ 발급';
         issueBtn.addEventListener('click', () => openQuickIssue(row));
 
+        const newBadge = isNewApplication(row) ? ' <span class="badge badge-new">NEW</span>' : '';
+        const question = (row.question || '').trim();
         tr.innerHTML = `
-            <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</td>
-            <td>${row.name}</td>
-            <td>${row.contact_type}</td>
-            <td>${row.contact_value}</td>
-            <td>${row.industry}</td>
-            <td>${row.payment_method}</td>
-            <td>${row.question || '-'}</td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td data-label="신청일시">${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</td>
+            <td data-label="이름"><b>${esc(row.name)}</b>${newBadge}</td>
+            <td data-label="연락처">${esc(row.contact_type)} · ${esc(row.contact_value)}</td>
+            <td data-label="업종">${esc(row.industry)}</td>
+            <td data-label="결제방법">${esc(row.payment_method)}</td>
+            <td data-label="질문" class="q-cell${question ? '' : ' empty'}" title="${question ? '눌러서 펼치기' : ''}">${question ? esc(question) : '-'}</td>
+            <td data-label="상태"></td>
+            <td data-label="빠른발급"></td>
+            <td data-label="삭제"></td>
         `;
-        tr.children[7].appendChild(select);
-        tr.children[8].appendChild(issueBtn);
-        tr.children[9].appendChild(deleteBtn);
+        const qCell = tr.children[5];
+        if (question) qCell.addEventListener('click', () => qCell.classList.toggle('open'));
+        tr.children[6].appendChild(select);
+        tr.children[7].appendChild(issueBtn);
+        tr.children[8].appendChild(deleteBtn);
         tbody.appendChild(tr);
     });
 }
@@ -466,78 +651,200 @@ document.querySelectorAll('#applications-filter-tabs .filter-tab').forEach(btn =
     });
 });
 
-async function loadLicenses() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=*&order=expires_at.asc.nullslast`, { headers: authHeaders() });
-    const rows = await res.json();
+document.querySelectorAll('#applications-status-tabs .filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => setApplicationsStatusFilter(btn.dataset.status));
+});
 
-    const licTbody = document.querySelector('#license-table tbody');
-    const expTbody = document.querySelector('#expiring-table tbody');
-    licTbody.innerHTML = '';
-    expTbody.innerHTML = '';
+document.getElementById('applications-search').addEventListener('input', (e) => {
+    applicationsSearch = e.target.value.trim();
+    renderApplicationsTable();
+});
 
-    document.getElementById('license-empty').style.display = rows.length ? 'none' : 'block';
-
-    let expiringCount = 0;
-
-    rows.forEach(row => {
-        const d = row.expires_at ? daysUntil(row.expires_at) : null;
-        let badge = '<span class="badge badge-ok">정상</span>';
-        let rowClass = '';
-        if (d !== null) {
-            if (d < 0) { badge = '<span class="badge badge-expired">만료됨</span>'; rowClass = 'expired'; }
-            else if (d <= 7) { badge = `<span class="badge badge-soon">D-${d}</span>`; rowClass = 'expiring'; }
-        } else if (row.period_months === -1) {
-            badge = '<span class="badge badge-ok">체험</span>';
-        } else {
-            badge = '<span class="badge badge-ok">영구</span>';
-        }
-
+// ---------------- 활성화 코드 (등록 대기분만) ----------------
+async function loadActivationCodes() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_codes?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
+    const rows = res.ok ? await res.json() : [];
+    // 등록된 코드는 DB 함수가 licenses에 자동 기록하므로 고객 목록에서 보인다 → 여기엔 대기분만
+    const pending = rows.filter(row => !row.mac_address);
+    const tbody = document.querySelector('#activation-codes-table tbody');
+    tbody.innerHTML = '';
+    document.getElementById('activation-codes-empty').style.display = pending.length ? 'none' : 'block';
+    pending.forEach(row => {
+        const periodLabel = row.period_days <= 1 ? '1일' : `${Math.round(row.period_days / 30)}개월`;
         const tr = document.createElement('tr');
-        tr.className = rowClass;
         tr.innerHTML = `
-            <td>${row.customer_name}</td>
-            <td>${row.contact_value || '-'}</td>
-            <td>${row.channel || '홈페이지'}</td>
-            <td>${row.mac_address}</td>
-            <td style="font-family:monospace; font-size:0.8rem;">${row.license_key}</td>
-            <td>${row.period_months === -1 ? '체험(3회)' : (row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구'))}</td>
-            <td>${row.issued_at}</td>
-            <td>${row.expires_at || '-'}</td>
-            <td>${badge}</td>
+            <td>${new Date(row.created_at).toLocaleString('ko-KR')}</td>
+            <td>${esc(row.customer_name || '-')}</td>
+            <td class="mono">${esc(row.code)}</td>
+            <td>${periodLabel}</td>
             <td></td>
         `;
-        const licDeleteBtn = document.createElement('button');
-        licDeleteBtn.className = 'delete-btn';
-        licDeleteBtn.textContent = '삭제';
-        licDeleteBtn.addEventListener('click', async () => {
-            if (!confirm(`"${row.customer_name}" 라이선스 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
-            await fetch(`${SUPABASE_URL}/rest/v1/licenses?id=eq.${row.id}`, {
-                method: 'DELETE',
-                headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-            });
-            loadLicenses();
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'ghost-btn';
+        copyBtn.textContent = '복사';
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(row.code).then(() => {
+                copyBtn.textContent = '복사됨!';
+                setTimeout(() => { copyBtn.textContent = '복사'; }, 1500);
+            }).catch(() => {});
         });
-        tr.lastElementChild.appendChild(licDeleteBtn);
-        licTbody.appendChild(tr);
-
-        if (d !== null && d >= 0 && d <= 7) {
-            expiringCount++;
-            const etr = document.createElement('tr');
-            etr.className = 'expiring';
-            etr.innerHTML = `
-                <td>${row.customer_name}</td>
-                <td>${row.contact_value || '-'}</td>
-                <td>${row.period_months === -1 ? '체험(3회)' : (row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구'))}</td>
-                <td>${row.expires_at}</td>
-                <td>D-${d}</td>
-            `;
-            expTbody.appendChild(etr);
-        }
+        tr.lastElementChild.appendChild(copyBtn);
+        tbody.appendChild(tr);
     });
-
-    document.getElementById('expiring-empty').style.display = expiringCount ? 'none' : 'block';
 }
 
+// ---------------- 고객·이용권 ----------------
+let allLicenses = [];
+let customersSearch = '';
+
+function periodLabel(row) {
+    return row.period_months === -1 ? '체험(3회)' : (row.period_months === 0 ? '1일' : (row.period_months ? row.period_months + '개월' : '영구'));
+}
+
+function licenseStatus(row) {
+    const d = row.expires_at ? daysUntil(row.expires_at) : null;
+    if (d !== null) {
+        if (d < 0) return { d, badge: '<span class="badge badge-expired">만료됨</span>', rowClass: 'expired', rank: 3 };
+        if (d <= 7) return { d, badge: `<span class="badge badge-soon">D-${d}</span>`, rowClass: 'expiring', rank: 0 };
+        return { d, badge: '<span class="badge badge-ok">정상</span>', rowClass: '', rank: 1 };
+    }
+    if (row.period_months === -1) return { d, badge: '<span class="badge badge-ok">체험</span>', rowClass: '', rank: 2 };
+    return { d, badge: '<span class="badge badge-ok">영구</span>', rowClass: '', rank: 2 };
+}
+
+async function loadLicenses() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=*&order=issued_at.desc`, { headers: authHeaders() });
+    allLicenses = await res.json();
+    renderExpiring();
+    renderCustomers();
+}
+
+function renderExpiring() {
+    const expTbody = document.querySelector('#expiring-table tbody');
+    expTbody.innerHTML = '';
+    const expiring = allLicenses
+        .map(row => ({ row, d: row.expires_at ? daysUntil(row.expires_at) : null }))
+        .filter(x => x.d !== null && x.d >= 0 && x.d <= 7)
+        .sort((a, b) => a.d - b.d);
+    expiring.forEach(({ row, d }) => {
+        const etr = document.createElement('tr');
+        etr.className = 'expiring';
+        etr.innerHTML = `
+            <td>${esc(row.customer_name)}</td>
+            <td>${esc(row.contact_value || '-')}</td>
+            <td>${periodLabel(row)}</td>
+            <td>${esc(row.expires_at)}</td>
+            <td>D-${d}</td>
+        `;
+        expTbody.appendChild(etr);
+    });
+    document.getElementById('expiring-empty').style.display = expiring.length ? 'none' : 'block';
+    setSummary('sum-expiring', expiring.length, 'warn');
+    setTabCount('tab-count-customers', expiring.length);
+}
+
+// 같은 PC(MAC)의 기록을 한 고객으로 묶는다. MAC이 없는 기록(예전 체험판 등)은 이름으로 묶는다.
+function groupLicenses(rows) {
+    const groups = new Map();
+    rows.forEach(row => {
+        const mac = (row.mac_address || '').trim().toUpperCase();
+        const key = mac ? `mac:${mac}` : `name:${row.customer_name}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(row);
+    });
+    return Array.from(groups.values()).map(list => {
+        list.sort((a, b) => String(b.issued_at).localeCompare(String(a.issued_at)));
+        const latest = list[0];
+        return { latest, history: list, status: licenseStatus(latest) };
+    });
+}
+
+function renderCustomers() {
+    const q = customersSearch.toLowerCase();
+    const groups = groupLicenses(allLicenses)
+        .filter(g => !q || g.history.some(r =>
+            [r.customer_name, r.contact_value, r.mac_address, r.license_key].join(' ').toLowerCase().includes(q)))
+        // 곧 만료 → 정상(만료 임박순) → 영구/체험 → 만료됨
+        .sort((a, b) => a.status.rank - b.status.rank || (a.status.d ?? 99999) - (b.status.d ?? 99999));
+
+    const licTbody = document.querySelector('#license-table tbody');
+    licTbody.innerHTML = '';
+    document.getElementById('license-empty').style.display = groups.length ? 'none' : 'block';
+
+    groups.forEach(({ latest, history, status }) => {
+        const tr = document.createElement('tr');
+        tr.className = status.rowClass;
+        tr.innerHTML = `
+            <td data-label="고객명"><b>${esc(latest.customer_name)}</b></td>
+            <td data-label="연락처">${esc(latest.contact_value || '-')}</td>
+            <td data-label="채널">${esc(latest.channel || '홈페이지')}</td>
+            <td data-label="MAC" class="mono">${esc(latest.mac_address || '-')}</td>
+            <td data-label="이용권">${periodLabel(latest)}</td>
+            <td data-label="만료일">${esc(latest.expires_at || '-')}</td>
+            <td data-label="상태">${status.badge}</td>
+            <td data-label="이력"></td>
+        `;
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'ghost-btn';
+        toggleBtn.textContent = `${history.length}건 ▾`;
+        tr.lastElementChild.appendChild(toggleBtn);
+        licTbody.appendChild(tr);
+
+        const detail = document.createElement('tr');
+        detail.className = 'detail-row';
+        detail.style.display = 'none';
+        const td = document.createElement('td');
+        td.colSpan = 8;
+        td.className = 'full';
+        td.innerHTML = `
+            <div class="table-scroll">
+                <table class="history-table">
+                    <thead><tr><th>발급일</th><th>기간</th><th>키</th><th>만료일</th><th>상태</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>`;
+        const hBody = td.querySelector('tbody');
+        history.forEach(row => {
+            const htr = document.createElement('tr');
+            htr.innerHTML = `
+                <td>${esc(row.issued_at)}</td>
+                <td>${periodLabel(row)}</td>
+                <td class="mono key-cell" title="${esc(row.license_key)}">${esc(row.license_key)}</td>
+                <td>${esc(row.expires_at || '-')}</td>
+                <td>${licenseStatus(row).badge}</td>
+                <td></td>
+            `;
+            const licDeleteBtn = document.createElement('button');
+            licDeleteBtn.className = 'delete-btn';
+            licDeleteBtn.textContent = '삭제';
+            licDeleteBtn.addEventListener('click', async () => {
+                if (!confirm(`"${row.customer_name}" 라이선스 기록(${row.issued_at} 발급)을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+                await fetch(`${SUPABASE_URL}/rest/v1/licenses?id=eq.${row.id}`, {
+                    method: 'DELETE',
+                    headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                });
+                loadLicenses();
+            });
+            htr.lastElementChild.appendChild(licDeleteBtn);
+            hBody.appendChild(htr);
+        });
+        detail.appendChild(td);
+        licTbody.appendChild(detail);
+
+        toggleBtn.addEventListener('click', () => {
+            const open = detail.style.display === 'none';
+            detail.style.display = open ? '' : 'none';
+            toggleBtn.textContent = `${history.length}건 ${open ? '▴' : '▾'}`;
+        });
+    });
+}
+
+document.getElementById('customers-search').addEventListener('input', (e) => {
+    customersSearch = e.target.value.trim();
+    renderCustomers();
+});
+
+// ---------------- 무료체험 ----------------
 async function loadTrialUsage() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/trial_usage?select=*&order=last_used_at.desc`, { headers: authHeaders() });
     const rows = await res.json();
@@ -552,27 +859,31 @@ async function loadTrialUsage() {
     tbody.innerHTML = '';
     document.getElementById('trial-usage-empty').style.display = rows.length ? 'none' : 'block';
 
+    let activeCount = 0;
     rows.forEach(row => {
         const mac = (row.mac_address || '').toUpperCase();
         const name = nameByMac[mac] || '미확인';
         const done = row.runs_used >= 3;
+        if (!done) activeCount++;
         const badge = done
             ? '<span class="badge badge-expired">3회 소진</span>'
             : `<span class="badge badge-ok">진행중 (${row.runs_used}/3)</span>`;
         const tr = document.createElement('tr');
         tr.className = done ? 'expired' : '';
         tr.innerHTML = `
-            <td>${name}</td>
-            <td>${mac}</td>
-            <td>${row.runs_used} / 3</td>
+            <td>${esc(name)}</td>
+            <td>${esc(mac)}</td>
+            <td>${esc(row.runs_used)} / 3</td>
             <td>${new Date(row.first_used_at).toLocaleString('ko-KR')}</td>
             <td>${new Date(row.last_used_at).toLocaleString('ko-KR')}</td>
             <td>${badge}</td>
         `;
         tbody.appendChild(tr);
     });
+    setSummary('sum-trials', activeCount, 'warn');
 }
 
+// ---------------- 오류 로그 ----------------
 async function loadErrorLogs() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/error_logs?select=*&order=created_at.desc&limit=200`, { headers: authHeaders() });
     const rows = await res.json();
@@ -587,17 +898,22 @@ async function loadErrorLogs() {
     tbody.innerHTML = '';
     document.getElementById('error-logs-empty').style.display = rows.length ? 'none' : 'block';
 
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentCount = rows.filter(r => new Date(r.created_at).getTime() >= weekAgo).length;
+    setSummary('sum-errors', recentCount, 'alert');
+    setTabCount('tab-count-errors', recentCount);
+
     rows.forEach(row => {
         const mac = (row.mac_address || '').toUpperCase();
         const name = nameByMac[mac] || '미확인';
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${new Date(row.created_at).toLocaleString('ko-KR')}</td>
-            <td>${name}</td>
-            <td>${mac}</td>
-            <td>${row.app_version || '-'}</td>
-            <td>${row.context || '-'}</td>
-            <td style="max-width:400px; white-space:pre-wrap; word-break:break-all;">${row.error_message || '-'}</td>
+            <td>${esc(name)}</td>
+            <td>${esc(mac)}</td>
+            <td>${esc(row.app_version || '-')}</td>
+            <td>${esc(row.context || '-')}</td>
+            <td style="max-width:400px; white-space:pre-wrap; word-break:break-all;">${esc(row.error_message || '-')}</td>
             <td></td>
         `;
         const errDeleteBtn = document.createElement('button');
