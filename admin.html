@@ -329,7 +329,7 @@
             <div class="table-scroll">
                 <table id="license-table" class="card-table">
                     <thead>
-                        <tr><th>고객명</th><th>연락처</th><th>채널</th><th>MAC</th><th>이용권</th><th>만료일</th><th>상태</th><th>이력</th></tr>
+                        <tr><th>고객명</th><th>연락처</th><th>채널</th><th>MAC</th><th>이용권</th><th>만료일</th><th>상태</th><th>사용</th><th>이력</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -876,6 +876,31 @@ function groupLicenses(rows) {
     });
 }
 
+// 발행 사용 기록 (usage_summary 뷰, 앱 v1.0.30부터 쌓임): MAC -> 요약
+let usageByMac = {};
+const USAGE_IDLE_DAYS = 14; // 이 기간 넘게 발행이 없으면 먼저 연락해볼 고객으로 표시
+
+async function loadUsageSummary() {
+    try {
+        const res = await apiFetch(`${SUPABASE_URL}/rest/v1/usage_summary?select=*`, { headers: authHeaders() });
+        if (!res.ok) return; // 서버에 사용 기록 설정(SQL)이 아직 없으면 조용히 건너뛴다
+        const rows = await res.json();
+        usageByMac = {};
+        rows.forEach(r => { usageByMac[(r.mac_address || '').trim().toUpperCase()] = r; });
+        renderCustomers();
+    } catch (e) { /* 사용 기록은 보조 정보라 실패해도 나머지 화면은 그대로 */ }
+}
+
+function usageCell(mac) {
+    const u = usageByMac[(mac || '').trim().toUpperCase()];
+    if (!u || !u.last_success_at) return '<span class="badge">기록 없음</span>';
+    const idle = Math.floor((Date.now() - new Date(u.last_success_at)) / 86400000);
+    const when = idle === 0 ? '오늘' : `${idle}일 전`;
+    const cls = idle > USAGE_IDLE_DAYS ? 'badge-soon' : 'badge-ok';
+    const fail = u.failed_30d > 0 ? ` · 실패 ${u.failed_30d}` : '';
+    return `<span class="badge ${cls}" title="이번 분기 ${u.success_quarter}건 · 누적 ${u.success_total}건">${when} · 30일 ${u.success_30d}건${fail}</span>`;
+}
+
 function renderCustomers() {
     const q = customersSearch.toLowerCase();
     const groups = groupLicenses(allLicenses)
@@ -899,6 +924,7 @@ function renderCustomers() {
             <td data-label="이용권">${periodLabel(latest)}</td>
             <td data-label="만료일">${esc(latest.expires_at || '-')}</td>
             <td data-label="상태">${status.badge}</td>
+            <td data-label="사용">${usageCell(latest.mac_address)}</td>
             <td data-label="이력"></td>
         `;
         const toggleBtn = document.createElement('button');
@@ -911,7 +937,7 @@ function renderCustomers() {
         detail.className = 'detail-row';
         detail.style.display = 'none';
         const td = document.createElement('td');
-        td.colSpan = 8;
+        td.colSpan = 9;
         td.className = 'full';
         td.innerHTML = `
             <div class="table-scroll">
@@ -1262,7 +1288,7 @@ document.getElementById('quick-issue-copy').addEventListener('click', () => {
 async function showDashboard() {
     loginScreen.style.display = 'none';
     dashboard.style.display = 'block';
-    await Promise.all([loadApplications(), loadLicenses(), loadTrialUsage(), loadErrorLogs(), loadActivationCodes()]);
+    await Promise.all([loadApplications(), loadLicenses(), loadTrialUsage(), loadErrorLogs(), loadActivationCodes(), loadUsageSummary()]);
 }
 
 document.getElementById('login-btn').addEventListener('click', async () => {

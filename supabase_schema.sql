@@ -265,3 +265,63 @@ create table if not exists license_signing_keys (
 );
 alter table license_signing_keys enable row level security;
 revoke all on license_signing_keys from anon, authenticated;
+
+-- 15. 사용 기록 (2026-09-29: 스마트상점 분기별 활용도 점검·초기창업패키지 근거·미사용 고객 관리용).
+--     발행 1건마다 앱이 report_usage()로 기록, 관리자는 usage_summary 뷰로 PC별 요약 조회.
+-- 1. 발행 1건마다 한 줄씩 쌓이는 표
+create table if not exists usage_logs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  mac_address text not null,
+  app_version text,
+  license_mode text,   -- TRIAL / PAID / PERMANENT
+  result text          -- success / failed
+);
+
+alter table usage_logs enable row level security;
+create index if not exists usage_logs_mac_created_idx on usage_logs (mac_address, created_at desc);
+
+-- 2. 앱(anon)은 이 함수로 기록만 할 수 있다 (조회 불가). 값 길이를 잘라 이상한 입력이 쌓이지 않게 한다.
+create or replace function report_usage(p_mac text, p_version text, p_mode text, p_result text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_mac is null or length(p_mac) = 0 then
+    return;
+  end if;
+  insert into usage_logs (mac_address, app_version, license_mode, result)
+  values (left(p_mac, 64), left(p_version, 20), left(p_mode, 20),
+          case when p_result in ('success', 'failed') then p_result else 'failed' end);
+end;
+$$;
+
+grant execute on function report_usage(text, text, text, text) to anon;
+
+-- 3. 조회는 관리자 계정만 — 이메일은 이미 운영 중인 error_logs 규칙에서 그대로 가져온다.
+do $$
+declare q text;
+begin
+  select qual into q from pg_policies
+   where tablename = 'error_logs' and policyname = 'admin_only_read_error_logs';
+  if q is null then
+    raise exception 'error_logs 관리자 규칙을 찾지 못했습니다';
+  end if;
+  execute 'drop policy if exists "admin_only_read_usage_logs" on usage_logs';
+  execute format('create policy "admin_only_read_usage_logs" on usage_logs for select to authenticated using (%s)', q);
+end $$;
+
+-- 4. 관리자 페이지용 PC별 요약. security_invoker라 위 관리자 규칙이 그대로 적용된다.
+create or replace view usage_summary with (security_invoker = true) as
+select
+  mac_address,
+  max(created_at) filter (where result = 'success') as last_success_at,
+  count(*) filter (where result = 'success' and created_at > now() - interval '30 days') as success_30d,
+  count(*) filter (where result = 'success' and created_at >= date_trunc('quarter', now())) as success_quarter,
+  count(*) filter (where result = 'success') as success_total,
+  count(*) filter (where result = 'failed' and created_at > now() - interval '30 days') as failed_30d
+from usage_logs
+group by mac_address;
+
