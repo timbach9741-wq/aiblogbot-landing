@@ -711,6 +711,15 @@
                         <textarea id="question-input" placeholder="자유롭게 작성해주세요" rows="3" style="width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; box-sizing: border-box; resize: vertical; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
                     </div>
 
+                    <!-- 6. 광고성 정보 수신 동의 (선택) — 정보통신망법상 사전 동의, 기본 해제 -->
+                    <div class="form-group" style="margin-bottom: 25px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+                        <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer; color: #334155; font-size: 0.95rem; line-height: 1.5;">
+                            <input type="checkbox" id="marketing-consent-input" style="margin-top: 4px; width: 18px; height: 18px; flex-shrink: 0;">
+                            <span><b>(선택)</b> 새 기능·할인 소식을 문자/카카오톡으로 받겠습니다.<br>
+                            <span style="font-size: 0.82rem; color: #64748b;">동의하지 않아도 신청과 체험에는 영향이 없어요. 언제든 "수신거부"라고 답장하시면 바로 멈춥니다.</span></span>
+                        </label>
+                    </div>
+
                     <button type="submit" id="app-form-submit-btn" class="btn-primary" style="width: 100%; font-size: 1.2rem; padding: 18px; border: none; cursor: pointer; border-radius: 30px;">제출하고 안내받기</button>
                     <p id="app-form-error" style="display:none; color:#ef4444; text-align:center; margin-top: 12px; font-size: 0.95rem;">전송에 실패했습니다. 잠시 후 다시 시도해주시거나 카카오톡으로 문의해주세요.</p>
                     <p style="text-align:center; margin-top: 12px; font-size: 0.82rem; color:#94a3b8; line-height:1.6;">입력하신 정보는 체험 안내·상담·이용권 발급에만 쓰여요. 자세한 내용은 <a href="privacy.html" target="_blank" rel="noopener" style="color:#64748b; text-decoration: underline;">개인정보처리방침</a>을 확인해 주세요.</p>
@@ -905,6 +914,8 @@
                     industry: industryValue,
                     payment_method: selectedPlan ? `계좌이체 - ${selectedPlan}` : '계좌이체',
                     question: document.getElementById('question-input').value.trim(),
+                    // 광고성 문자·카톡은 이 값이 true인 신청자에게만 보낸다 (동의 시각 = created_at)
+                    marketing_consent: document.getElementById('marketing-consent-input').checked,
                 };
                 if (appMac) {
                     // 별도 컬럼 없이 문의란에 붙여서 관리자 페이지/텔레그램 알림에 그대로 보이게 한다

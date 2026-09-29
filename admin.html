@@ -744,7 +744,7 @@ function renderApplicationsTable() {
         const question = (row.question || '').trim();
         const when = `${dt.toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'})} ${dt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}`;
         tr.innerHTML = `
-            <td data-label="신청"><div class="cellbox"><div><b>${esc(row.name)}</b>${newBadge}${trialDiscountBadge(row)}</div><div class="sub-line">${when}</div></div></td>
+            <td data-label="신청"><div class="cellbox"><div><b>${esc(row.name)}</b>${newBadge}${trialDiscountBadge(row)}${row.marketing_consent ? ' <span class="badge badge-ok" title="신청서에서 광고성 문자·카톡 수신에 선택 동의 (동의 시각 = 신청 시각)">📩 수신동의</span>' : ''}</div><div class="sub-line">${when}</div></div></td>
             <td data-label="연락처" class="nowrap">${esc(row.contact_type)} · ${esc(row.contact_value)}</td>
             <td data-label="업종 / 결제"><div class="cellbox"><div>${esc(row.industry)}</div><div class="sub-line">${paymentLabel(row)}</div></div></td>
             <td data-label="질문" class="q-cell${question ? '' : ' empty'}" title="${question ? '눌러서 펼치기' : ''}">${question ? esc(question) : '-'}</td>

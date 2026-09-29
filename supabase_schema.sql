@@ -325,3 +325,6 @@ select
 from usage_logs
 group by mac_address;
 
+
+-- 16. 광고성 정보 수신 동의 (2026-09-29): 신청서 선택 체크(기본 해제). true인 신청자에게만 광고성 문자·카톡 발송.
+alter table applications add column if not exists marketing_consent boolean not null default false;
